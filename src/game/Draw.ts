@@ -233,6 +233,22 @@ export function drawPointer(g: G): void {
   g.strokePoints(pts, true, true);
 }
 
+/** チュートリアルの説明カード（白・オレンジふち・柔らかい影）。中心 (0,0) */
+export function drawBubble(g: G, w: number, h: number): void {
+  const r = 30;
+  g.clear();
+  g.fillStyle(0x000000, 0.10);
+  g.fillRoundedRect(-w / 2 - 6, -h / 2 + 16, w + 12, h + 4, r + 6);
+  g.fillStyle(0x000000, 0.08);
+  g.fillRoundedRect(-w / 2 - 2, -h / 2 + 10, w + 4, h + 2, r + 2);
+  g.fillStyle(T.ORANGE_DARK, 1);
+  g.fillRoundedRect(-w / 2, -h / 2 + 8, w, h, r);
+  g.fillStyle(T.CARD, 1);
+  g.fillRoundedRect(-w / 2, -h / 2, w, h, r);
+  g.lineStyle(6, T.ORANGE, 1);
+  g.strokeRoundedRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, r - 4);
+}
+
 /** 点線の円 */
 export function drawDashedCircle(g: G, r: number, color: number, width = 4, dashes = 12, alpha = 1): void {
   g.lineStyle(width, color, alpha);

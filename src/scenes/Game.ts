@@ -61,6 +61,8 @@ export class Game extends Phaser.Scene {
 
   // チュートリアル（1面）：ひとことを状況に合わせて切り替える
   private hint!: Phaser.GameObjects.Text;
+  /** 1面だけ：盤面の上に浮かぶ説明カード */
+  private bubble?: { c: Phaser.GameObjects.Container; bg: Phaser.GameObjects.Graphics; text: Phaser.GameObjects.Text };
   private pointer?: Phaser.GameObjects.Container;
   private tutorial = false;
   private tut = { started: false, tray: false, plate: false };
@@ -87,6 +89,7 @@ export class Game extends Phaser.Scene {
     this.progress = { p: 0 };
     this.tut = { started: false, tray: false, plate: false };
     this.pointer = undefined;
+    this.bubble = undefined;
 
     const level = LEVELS[this.levelIdx];
     this.tutorial = level.tutorial === true;
@@ -202,6 +205,19 @@ export class Game extends Phaser.Scene {
     this.juice = new Juice(this);
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onTap(p.x, p.y));
 
+    // チュートリアル：説明は盤面上部に浮かぶカードで大きく出す（ヘッダー下の行は隠す）
+    if (this.tutorial) {
+      this.hint.setVisible(false);
+      const bg = this.add.graphics();
+      const text = this.add
+        .text(0, 0, '', { ...TEXT(42), align: 'center', wordWrap: { width: 800, useAdvancedWrap: true }, lineSpacing: 10 })
+        .setOrigin(0.5);
+      const c = this.add.container(BASE_W / 2, T.BUBBLE_Y, [bg, text]).setDepth(T.DEPTH.flying + 3);
+      this.bubble = { c, bg, text };
+      this.tweens.add({ targets: c, y: T.BUBBLE_Y - 8, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.setHint('ネジをタップして抜いてみよう', true);
+    }
+
     // チュートリアル：最初に抜けるネジを矢印で指す
     if (this.tutorial) {
       const first = this.board.pullableScrews()[0];
@@ -218,8 +234,17 @@ export class Game extends Phaser.Scene {
 
   // ---------- チュートリアル ----------
 
-  private setHint(text: string): void {
-    if (this.hint.text === text) return;
+  private setHint(text: string, force = false): void {
+    if (this.bubble) {
+      const { c, bg, text: t } = this.bubble;
+      if (!force && t.text === text) return;
+      t.setText(text);
+      D.drawBubble(bg, Math.min(900, Math.max(520, t.width + 88)), t.height + 56);
+      c.setScale(0.9).setAlpha(0.6);
+      this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 260, ease: 'Back.easeOut' });
+      return;
+    }
+    if (!force && this.hint.text === text) return;
     this.hint.setText(text);
     this.hint.setScale(1.06);
     this.tweens.add({ targets: this.hint, scale: 1, duration: 220, ease: 'Back.easeOut' });

@@ -42,6 +42,8 @@ export const PLATE_ALPHA = 0.94;
 export const HEADER = { logoX: 60, logoY: 40, levelY: 96, retryX: 966, retryY: 96, retryR: 50 };
 export const PROGRESS = { x: 60, y: 172, w: 960, h: 16 };
 export const HINT_Y = 232;
+/** チュートリアルの説明カードの中心 y（フレーム上部の空きスペース） */
+export const BUBBLE_Y = 520;
 
 export const TRAY_Y = 308;
 export const TRAY_X = [200, 540, 880];
