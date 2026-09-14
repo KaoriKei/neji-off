@@ -10,5 +10,6 @@ import l07 from './07.json';
 import l08 from './08.json';
 import l09 from './09.json';
 import l10 from './10.json';
+import l11 from './11.json';
 
-export const LEVELS: LevelDef[] = [l01, l02, l03, l04, l05, l06, l07, l08, l09, l10] as LevelDef[];
+export const LEVELS: LevelDef[] = [l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11] as LevelDef[];

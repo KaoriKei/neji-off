@@ -4,114 +4,110 @@
     {
       "id": "A",
       "x": 70,
-      "y": 470,
-      "w": 890,
-      "h": 550,
+      "y": 700,
+      "w": 910,
+      "h": 710,
       "z": 0,
-      "color": "mint",
+      "color": "grey",
       "screws": [
-        { "x": 290, "y": 930, "color": "yellow" },
-        { "x": 730, "y": 774, "color": "red" },
-        { "x": 464, "y": 594, "color": "blue" },
-        { "x": 294, "y": 544, "color": "green" }
+        { "x": 460, "y": 774, "color": "green" },
+        { "x": 224, "y": 1270, "color": "red" },
+        { "x": 290, "y": 980, "color": "yellow" },
+        { "x": 754, "y": 1074, "color": "red" }
       ]
     },
     {
       "id": "B",
-      "x": 240,
-      "y": 830,
-      "w": 660,
-      "h": 520,
+      "x": 300,
+      "y": 450,
+      "w": 530,
+      "h": 400,
       "z": 1,
-      "color": "grey",
+      "color": "cream",
       "screws": [
-        { "x": 630, "y": 990, "color": "red" },
-        { "x": 550, "y": 1270, "color": "blue" },
-        { "x": 324, "y": 1104, "color": "yellow" }
+        { "x": 714, "y": 704, "color": "green" }
       ]
     },
     {
       "id": "C",
-      "x": 400,
-      "y": 940,
-      "w": 510,
-      "h": 420,
+      "x": 350,
+      "y": 650,
+      "w": 600,
+      "h": 300,
       "z": 2,
       "color": "mint",
       "screws": [
-        { "x": 674, "y": 1284, "color": "yellow" },
-        { "x": 634, "y": 1104, "color": "green" }
+        { "x": 784, "y": 874, "color": "yellow" },
+        { "x": 564, "y": 744, "color": "blue" }
       ]
     },
     {
       "id": "D",
-      "x": 410,
-      "y": 1040,
-      "w": 590,
-      "h": 330,
+      "x": 140,
+      "y": 590,
+      "w": 740,
+      "h": 550,
       "z": 3,
       "color": "lavender",
       "screws": [
-        { "x": 914, "y": 1174, "color": "green" },
-        { "x": 844, "y": 1264, "color": "green" },
-        { "x": 754, "y": 1114, "color": "blue" },
-        { "x": 494, "y": 1104, "color": "blue" }
+        { "x": 434, "y": 1004, "color": "yellow" },
+        { "x": 364, "y": 724, "color": "red" },
+        { "x": 594, "y": 1014, "color": "blue" }
       ]
     },
     {
       "id": "E",
       "x": 210,
-      "y": 690,
-      "w": 600,
-      "h": 500,
+      "y": 560,
+      "w": 440,
+      "h": 340,
       "z": 4,
-      "color": "cream",
+      "color": "grey",
       "screws": [
-        { "x": 314, "y": 804, "color": "yellow" },
-        { "x": 734, "y": 1004, "color": "blue" },
-        { "x": 464, "y": 824, "color": "yellow" },
-        { "x": 444, "y": 1004, "color": "blue" }
+        { "x": 524, "y": 634, "color": "blue" },
+        { "x": 284, "y": 644, "color": "yellow" },
+        { "x": 404, "y": 624, "color": "green" }
       ]
     },
     {
       "id": "F",
-      "x": 530,
-      "y": 380,
-      "w": 380,
-      "h": 470,
+      "x": 70,
+      "y": 1060,
+      "w": 470,
+      "h": 360,
       "z": 5,
-      "color": "grey",
+      "color": "cream",
       "screws": [
-        { "x": 604, "y": 634, "color": "yellow" },
-        { "x": 804, "y": 444, "color": "green" },
-        { "x": 624, "y": 504, "color": "green" }
+        { "x": 374, "y": 1264, "color": "blue" },
+        { "x": 474, "y": 1194, "color": "blue" },
+        { "x": 454, "y": 1344, "color": "green" },
+        { "x": 304, "y": 1354, "color": "green" }
       ]
     },
     {
       "id": "G",
-      "x": 390,
-      "y": 710,
-      "w": 460,
-      "h": 460,
+      "x": 120,
+      "y": 830,
+      "w": 550,
+      "h": 290,
       "z": 6,
-      "color": "lavender",
+      "color": "cream",
       "screws": [
-        { "x": 644, "y": 864, "color": "green" },
-        { "x": 764, "y": 894, "color": "green" },
-        { "x": 514, "y": 924, "color": "green" },
-        { "x": 584, "y": 774, "color": "red" }
+        { "x": 504, "y": 924, "color": "yellow" },
+        { "x": 404, "y": 894, "color": "yellow" },
+        { "x": 194, "y": 924, "color": "green" },
+        { "x": 194, "y": 1044, "color": "blue" }
       ]
     }
   ],
   "trays": [
-    "blue",
+    "green",
+    "yellow",
+    "green",
+    "yellow",
     "red",
-    "green",
-    "yellow",
-    "yellow",
     "blue",
-    "green",
-    "green"
+    "blue"
   ],
-  "bufferSize": 5
+  "bufferSize": 4
 }

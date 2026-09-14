@@ -1,68 +1,39 @@
 {
   "id": 1,
+  "tutorial": true,
   "plates": [
     {
       "id": "A",
-      "x": 120,
-      "y": 900,
-      "w": 840,
-      "h": 560,
+      "x": 200,
+      "y": 760,
+      "w": 680,
+      "h": 360,
       "z": 0,
       "color": "cream",
       "screws": [
-        { "x": 380, "y": 1000, "color": "red" },
-        { "x": 700, "y": 1000, "color": "red" },
-        { "x": 200, "y": 1380, "color": "red" },
-        { "x": 880, "y": 1380, "color": "blue" }
+        { "x": 270, "y": 830, "color": "red" },
+        { "x": 760, "y": 830, "color": "red" },
+        { "x": 810, "y": 1050, "color": "blue" }
       ]
     },
     {
       "id": "B",
-      "x": 300,
-      "y": 700,
-      "w": 480,
-      "h": 420,
+      "x": 420,
+      "y": 620,
+      "w": 420,
+      "h": 330,
       "z": 1,
       "color": "mint",
       "screws": [
-        { "x": 380, "y": 780, "color": "green" },
-        { "x": 700, "y": 780, "color": "red" },
-        { "x": 600, "y": 1040, "color": "blue" }
-      ]
-    },
-    {
-      "id": "C",
-      "x": 520,
-      "y": 520,
-      "w": 420,
-      "h": 580,
-      "z": 2,
-      "color": "grey",
-      "screws": [
-        { "x": 580, "y": 600, "color": "red" },
-        { "x": 860, "y": 600, "color": "blue" },
-        { "x": 860, "y": 840, "color": "green" }
-      ]
-    },
-    {
-      "id": "D",
-      "x": 200,
-      "y": 480,
-      "w": 440,
-      "h": 420,
-      "z": 3,
-      "color": "lavender",
-      "screws": [
-        { "x": 280, "y": 560, "color": "green" },
-        { "x": 560, "y": 560, "color": "red" }
+        { "x": 490, "y": 690, "color": "red" },
+        { "x": 770, "y": 690, "color": "blue" },
+        { "x": 630, "y": 880, "color": "blue" }
       ]
     }
   ],
   "trays": [
     "red",
-    "blue",
-    "red",
-    "green"
+    "blue"
   ],
   "bufferSize": 5
 }

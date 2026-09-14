@@ -28,6 +28,8 @@ export interface LevelDef {
   plates: PlateDef[];
   trays: Color[];
   bufferSize?: number;
+  /** チュートリアル面：画面上に短い説明を出す（1面のみ） */
+  tutorial?: boolean;
 }
 
 // 基準解像度

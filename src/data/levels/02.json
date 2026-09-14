@@ -4,64 +4,64 @@
     {
       "id": "A",
       "x": 120,
-      "y": 960,
+      "y": 900,
       "w": 840,
-      "h": 500,
+      "h": 560,
       "z": 0,
-      "color": "lavender",
+      "color": "cream",
       "screws": [
-        { "x": 180, "y": 1040, "color": "yellow" },
-        { "x": 900, "y": 1040, "color": "blue" },
-        { "x": 900, "y": 1380, "color": "yellow" }
+        { "x": 380, "y": 1000, "color": "red" },
+        { "x": 700, "y": 1000, "color": "red" },
+        { "x": 200, "y": 1380, "color": "red" },
+        { "x": 880, "y": 1380, "color": "blue" }
       ]
     },
     {
       "id": "B",
-      "x": 240,
-      "y": 780,
-      "w": 600,
-      "h": 400,
+      "x": 300,
+      "y": 700,
+      "w": 480,
+      "h": 420,
       "z": 1,
-      "color": "grey",
+      "color": "mint",
       "screws": [
-        { "x": 320, "y": 900, "color": "blue" },
-        { "x": 770, "y": 860, "color": "yellow" },
-        { "x": 540, "y": 1100, "color": "blue" }
+        { "x": 380, "y": 780, "color": "green" },
+        { "x": 700, "y": 780, "color": "red" },
+        { "x": 600, "y": 1040, "color": "blue" }
       ]
     },
     {
       "id": "C",
-      "x": 380,
-      "y": 600,
-      "w": 460,
-      "h": 560,
+      "x": 520,
+      "y": 520,
+      "w": 420,
+      "h": 580,
       "z": 2,
-      "color": "cream",
+      "color": "grey",
       "screws": [
-        { "x": 460, "y": 680, "color": "blue" },
-        { "x": 780, "y": 680, "color": "green" },
-        { "x": 620, "y": 900, "color": "blue" }
+        { "x": 580, "y": 600, "color": "red" },
+        { "x": 860, "y": 600, "color": "blue" },
+        { "x": 860, "y": 840, "color": "green" }
       ]
     },
     {
       "id": "D",
-      "x": 160,
-      "y": 460,
-      "w": 560,
-      "h": 500,
+      "x": 200,
+      "y": 480,
+      "w": 440,
+      "h": 420,
       "z": 3,
-      "color": "mint",
+      "color": "lavender",
       "screws": [
-        { "x": 240, "y": 540, "color": "green" },
-        { "x": 640, "y": 540, "color": "blue" },
-        { "x": 440, "y": 760, "color": "green" }
+        { "x": 280, "y": 560, "color": "green" },
+        { "x": 560, "y": 560, "color": "red" }
       ]
     }
   ],
   "trays": [
+    "red",
     "blue",
-    "yellow",
-    "blue",
+    "red",
     "green"
   ],
   "bufferSize": 5

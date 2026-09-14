@@ -2,7 +2,7 @@
 // 盤面（板とネジ）は boardLayer に入れて、レベル座標 → 画面座標へ縮小して金属フレームに収める。
 import Phaser from 'phaser';
 import { LEVELS } from '../data/levels/index';
-import { Board } from '../game/Board';
+import { Board, type BoardEvent } from '../game/Board';
 import { validateLevel, screwId as mkScrewId, type Color, type PlateDef, type ScrewDef, BASE_W, BASE_H } from '../game/Level';
 import { Juice } from '../game/Juice';
 import { Sfx } from '../game/Sfx';
@@ -59,6 +59,12 @@ export class Game extends Phaser.Scene {
   private locked = false;
   private over = false;
 
+  // チュートリアル（1面）：ひとことを状況に合わせて切り替える
+  private hint!: Phaser.GameObjects.Text;
+  private pointer?: Phaser.GameObjects.Container;
+  private tutorial = false;
+  private tut = { started: false, tray: false, plate: false };
+
   constructor() {
     super('Game');
   }
@@ -79,8 +85,11 @@ export class Game extends Phaser.Scene {
     this.bufferMarks = [];
     this.bufferScrews = [];
     this.progress = { p: 0 };
+    this.tut = { started: false, tray: false, plate: false };
+    this.pointer = undefined;
 
     const level = LEVELS[this.levelIdx];
+    this.tutorial = level.tutorial === true;
     for (const w of validateLevel(level)) console.warn(w);
     this.board = new Board(level);
     this.totalScrews = this.board.allScrews().length;
@@ -107,8 +116,11 @@ export class Game extends Phaser.Scene {
     this.progressFill = this.add.graphics({ x: T.PROGRESS.x, y: T.PROGRESS.y }).setDepth(T.DEPTH.ui + 1);
     D.drawProgressFill(this.progressFill, 0);
 
-    // ひとこと
-    this.add.text(BASE_W / 2, T.HINT_Y, '同じ色を3本そろえよう', TEXT(36)).setOrigin(0.5).setDepth(T.DEPTH.ui);
+    // ひとこと（チュートリアル面は状況に合わせて切り替える）
+    this.hint = this.add
+      .text(BASE_W / 2, T.HINT_Y, this.tutorial ? 'ネジをタップして抜いてみよう' : '同じ色を3本そろえよう', TEXT(36))
+      .setOrigin(0.5)
+      .setDepth(T.DEPTH.ui);
 
     // ---- トレイ ----
     const snap = this.board.snapshot();
@@ -189,6 +201,56 @@ export class Game extends Phaser.Scene {
 
     this.juice = new Juice(this);
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onTap(p.x, p.y));
+
+    // チュートリアル：最初に抜けるネジを矢印で指す
+    if (this.tutorial) {
+      const first = this.board.pullableScrews()[0];
+      if (first) {
+        const s = this.board.getScrew(first)!;
+        const p = this.toScreen(s.x, s.y);
+        const g = this.add.graphics();
+        D.drawPointer(g);
+        this.pointer = this.add.container(p.x, p.y - 52, [g]).setDepth(T.DEPTH.flying + 2);
+        this.tweens.add({ targets: this.pointer, y: p.y - 70, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      }
+    }
+  }
+
+  // ---------- チュートリアル ----------
+
+  private setHint(text: string): void {
+    if (this.hint.text === text) return;
+    this.hint.setText(text);
+    this.hint.setScale(1.06);
+    this.tweens.add({ targets: this.hint, scale: 1, duration: 220, ease: 'Back.easeOut' });
+  }
+
+  /** 抜けた結果に応じて説明を切り替える（1面のみ）。仮置き場の説明はどの面でも初回だけ出す */
+  private tutorialOnEvents(events: BoardEvent[]): void {
+    const has = (t: BoardEvent['type']): boolean => events.some((e) => e.type === t);
+    if (has('screwToBuffer') && !this.registry.get('hintBufferShown')) {
+      this.registry.set('hintBufferShown', true);
+      this.setHint('入らないネジは一時置きへ。満杯になるとゲームオーバー');
+      return;
+    }
+    if (!this.tutorial) return;
+    if (this.pointer) {
+      this.pointer.destroy();
+      this.pointer = undefined;
+    }
+    if (!this.tut.started) {
+      this.tut.started = true;
+      this.setHint('同じ色のトレイに入るよ。3本そろえよう');
+    }
+    if (has('plateDropped') && !this.tut.plate) {
+      this.tut.plate = true;
+      this.time.delayedCall(700, () => this.setHint('板のネジを全部抜くと、板が外れる'));
+    }
+    if (has('trayCompleted') && !this.tut.tray) {
+      this.tut.tray = true;
+      const next = has('trayArrived') ? '次のトレイが来る' : '全部そろえたらクリア';
+      this.time.delayedCall(700, () => this.setHint(`3本そろうとトレイが消える。${next}`));
+    }
   }
 
   // ---------- 生成 ----------
@@ -335,10 +397,16 @@ export class Game extends Phaser.Scene {
 
     const r = this.board.pull(id);
     if (!r.ok) {
-      if (r.reason === 'covered') this.juice.shakeCovered(id, r.coveredBy);
-      else if (r.reason === 'full') this.juice.shakeFull(id);
+      if (r.reason === 'covered') {
+        this.juice.shakeCovered(id, r.coveredBy);
+        if (this.tutorial) this.setHint('上の板にかくれたネジは抜けない。上の板から外そう');
+      } else if (r.reason === 'full') {
+        this.juice.shakeFull(id);
+        this.setHint('一時置きが満杯。同じ色のトレイが来るまで抜けない');
+      }
       return;
     }
+    this.tutorialOnEvents(r.events);
     // 入力ロックは抜いたネジの飛行 0.4 秒だけ
     this.locked = true;
     this.time.delayedCall(400, () => {

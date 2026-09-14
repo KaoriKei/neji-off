@@ -216,6 +216,23 @@ export function drawGhostScrew(g: G): void {
   g.fillRoundedRect(-4, -18, 8, 36, 3);
 }
 
+/** チュートリアルの「ここをタップ」矢印（下向き・オレンジ・白ふち）。先端が (0,0) */
+export function drawPointer(g: G): void {
+  const pts = [
+    { x: -13, y: -84 }, { x: 13, y: -84 }, { x: 13, y: -36 }, { x: 34, y: -36 },
+    { x: 0, y: 0 }, { x: -34, y: -36 }, { x: -13, y: -36 },
+  ];
+  g.clear();
+  g.fillStyle(0x000000, 0.12);
+  g.fillEllipse(0, 6, 56, 14);
+  g.lineStyle(8, 0xffffff, 1);
+  g.strokePoints(pts, true, true);
+  g.fillStyle(T.ORANGE, 1);
+  g.fillPoints(pts, true, true);
+  g.lineStyle(3, T.ORANGE_DARK, 0.6);
+  g.strokePoints(pts, true, true);
+}
+
 /** 点線の円 */
 export function drawDashedCircle(g: G, r: number, color: number, width = 4, dashes = 12, alpha = 1): void {
   g.lineStyle(width, color, alpha);
