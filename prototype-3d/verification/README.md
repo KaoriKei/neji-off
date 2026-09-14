@@ -2,6 +2,11 @@
 
 このフォルダの画像は実装した3D試作をブラウザで表示したもの。
 
+色の視認性（390×844、ブラウザー表示）:
+
+- `color-before-mobile.png` / `color-after-mobile.png`: Lv4で、識別色を濃くし色リングとトレイの枠を太くした前後の比較。
+- `color-buffer-trays-mobile.png`: 青・紫がトレイ、緑が一時置きへ着地した状態。
+
 全11レベルと文字サイズの改修（390×844、ブラウザー表示）:
 
 - `level04-half-plate-mobile.png`: 上面に半分ほどの追加板を載せたLv4。

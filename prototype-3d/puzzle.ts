@@ -5,10 +5,10 @@ import study from './layout-study.json';
 
 export const LEVEL = study.level as LevelDef;
 export const COLORS = {
-  blue: { hex:'#00afcc', name:'青', mark:'●' },
-  red: { hex:'#ad5269', name:'赤', mark:'◆' },
-  yellow: { hex:'#8965bb', name:'紫', mark:'▲' },
-  green: { hex:'#789874', name:'緑', mark:'■' },
+  blue: { hex:'#008ebc', name:'青', mark:'●' },
+  red: { hex:'#bc304f', name:'赤', mark:'◆' },
+  yellow: { hex:'#7438b8', name:'紫', mark:'▲' },
+  green: { hex:'#228536', name:'緑', mark:'■' },
 } as const;
 
 export class Puzzle {

@@ -72,7 +72,8 @@ export class MetalScene {
       recess:new THREE.MeshStandardMaterial({color:0x30383d,roughness:.75,metalness:.4}),
       thread:new THREE.MeshStandardMaterial({color:0x87939a,metalness:.85,roughness:.5}),
     };
-    this.washerMaterials=Object.fromEntries(Object.entries(COLORS).map(([k,c])=>[k,new THREE.MeshStandardMaterial({color:c.hex,metalness:.15,roughness:.51,envMapIntensity:.20})]));
+    // 色の部分はつやを抑えた塗装にし、反射で白っぽくなるのを防ぐ。
+    this.washerMaterials=Object.fromEntries(Object.entries(COLORS).map(([k,c])=>[k,new THREE.MeshStandardMaterial({color:c.hex,metalness:0,roughness:.82,envMapIntensity:.08,emissive:c.hex,emissiveIntensity:.04})]));
     this.buildBackdrop();
     this.plates=new Map();this.screws=new Map();this.jobs=[];this.inspect=0;this.inspectTarget=0;this.locked=false;this.lastTime=performance.now();
     this.makeScrewGeometry();
@@ -102,11 +103,12 @@ export class MetalScene {
 
   makeScrewGeometry(){
     const washer=new THREE.Shape();washer.absarc(0,0,.245,0,Math.PI*2,false);circularHole(washer,0,0,.108);
-    const head=new THREE.Shape();head.absarc(0,0,.18,0,Math.PI*2,false);
-    const cross=new THREE.Path();const arm=.125,neck=.045;
+    // 外径は保ち、銀色の頭を少し小さくして色のリングを太く見せる。
+    const head=new THREE.Shape();head.absarc(0,0,.145,0,Math.PI*2,false);
+    const cross=new THREE.Path();const arm=.102,neck=.035;
     const points=[[-neck,-arm],[-neck,-neck],[-arm,-neck],[-arm,neck],[-neck,neck],[-neck,arm],[neck,arm],[neck,neck],[arm,neck],[arm,-neck],[neck,-neck],[neck,-arm]];
     cross.moveTo(...points[0]);points.slice(1).forEach(p=>cross.lineTo(...p));cross.closePath();head.holes.push(cross);
-    this.geo={washer:extrude(washer,.055,.012),head:extrude(head,.10,.018),shaft:new THREE.CylinderGeometry(.077,.065,.43,16),thread:new THREE.TorusGeometry(.081,.012,5,18),recess:new THREE.CircleGeometry(.164,24)};
+    this.geo={washer:extrude(washer,.055,.012),head:extrude(head,.10,.014),shaft:new THREE.CylinderGeometry(.077,.065,.43,16),thread:new THREE.TorusGeometry(.081,.012,5,18),recess:new THREE.CircleGeometry(.130,24)};
     this.geo.shaft.rotateX(Math.PI/2);
   }
 
