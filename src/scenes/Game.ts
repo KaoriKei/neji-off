@@ -260,9 +260,9 @@ export class Game extends Phaser.Scene {
     line.strokePath();
     const sg = this.add.graphics();
     D.drawSideScrew(sg);
-    const screw = this.add.container(-w / 2 + 380, 26, [sg]).setAngle(-22).setScale(0.95);
-    const tag = this.add.text(w / 2 - 40, 0, 'つくるを支える\n小さな力', { ...TEXT(28, T.GREY_TEXT_CSS), align: 'right', lineSpacing: 6 }).setOrigin(1, 0.5);
-    this.add.container(cx, cy, [card, name, sub, line, screw, tag]).setDepth(T.DEPTH.ui);
+    // 仕切りの右側はネジのイラストだけ（文言なし）。残り幅の中央に置く
+    const screw = this.add.container(-w / 2 + 330 + 215, 34, [sg]).setAngle(-22).setScale(1.05);
+    this.add.container(cx, cy, [card, name, sub, line, screw]).setDepth(T.DEPTH.ui);
   }
 
   // ---------- 盤面 ⇄ 画面 ----------
