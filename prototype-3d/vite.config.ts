@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 
-// 既存の公開版とは別に、3D試作だけをビルドする。
+// 本番のゲーム画面。公開用のURL配置は scripts/package-site.mjs が担当する。
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   base: './',

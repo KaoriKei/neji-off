@@ -27,23 +27,22 @@ npm install
 npm run dev -- --host 127.0.0.1 --port 5178
 ```
 
-`http://127.0.0.1:5178/prototype-3d/` を開く。
+`http://127.0.0.1:5178/` を開く。
 
 ```sh
 npm run build:3d
 ```
 
-3D試作だけを `prototype-3d/dist/` に出力する。既存の `npm run build` は従来のゲームを対象にする。
+完成版だけを `prototype-3d/dist/` に出力する。`npm run build` は完成版と従来版をビルドし、本番用の配置を `dist/` に作る。
 
 ## 公開
 
-- 通常版： https://kaorikei.github.io/neji-off/
-- キューブ版： https://kaorikei.github.io/neji-off/cube/
-- キューブ版の開発ブランチ：`feature/metal-cube`
+- 本番の完成版： https://kaorikei.github.io/neji-off/
+- 以前共有したURL（同じ完成版）： https://kaorikei.github.io/neji-off/cube/
+- 従来の平面版： https://kaorikei.github.io/neji-off/classic/
+- 本番ブランチ：`main`
 
-GitHub Actions が `main` の通常版と `feature/metal-cube` のキューブ版をそれぞれ検証・ビルドし、ひとつのPages公開物にまとめる。どちらのブランチへのpushでも、両方のURLを維持して更新する。`main` に入れるのはこの公開処理の変更だけで、キューブ版のゲーム本体は専用ブランチで管理する。
-
-キューブ版の公開中は専用ブランチを削除しない。ブランチ名を変える場合は、両ブランチの `.github/workflows/deploy.yml` と `github-pages` 環境の許可ブランチも変更する。
+完成版をmainに統合し、mainへのpushだけでGitHub Pagesを更新する。テスト・検証・型検査を通した同じコミットから、完成版と従来版をビルドする。`scripts/package-site.mjs` が本番ルート、共有済みの `/cube/`、従来版の `/classic/` に配置する。開発ブランチからの本番上書きや、専用ブランチへの依存はない。
 
 ## 操作
 
@@ -121,4 +120,4 @@ npm run build:3d
 
 前回の平面試作の配置・ソルバー確認は `layout-study.json`、`choose-layout.ts`、`tests/Prototype3D.test.ts` に保持している。
 
-開発サーバーだけは `http://127.0.0.1:5178/prototype-3d/?level=8` のように任意の面を直接確認できる。公開ビルドではこの指定を使わず、Lv1から始まる。
+開発サーバーだけは `http://127.0.0.1:5178/?level=8` のように任意の面を直接確認できる。公開ビルドではこの指定を使わず、Lv1から始まる。

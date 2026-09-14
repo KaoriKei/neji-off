@@ -1,10 +1,12 @@
 {
   "name": "neji-off",
   "version": "0.1.0",
-  "description": "NEJI OFF prototype (Phaser 3 + TS + Vite)",
+  "description": "NEJI OFF — 平面チュートリアルから立体へ進む金属のパズル",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --config prototype-3d/vite.config.ts",
+    "dev:classic": "vite",
+    "build": "npm run build:3d && npm run build:classic && node scripts/package-site.mjs",
+    "build:classic": "vite build --outDir .build/classic",
     "preview": "vite preview",
     "test": "vitest run",
     "verify": "tsx scripts/verify-levels.ts",
