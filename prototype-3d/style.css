@@ -31,3 +31,14 @@
 .tray-holes{grid-template-columns:repeat(3,minmax(0,1fr))}.hole{min-width:0}
 
 .tray.arrived{animation-duration:120ms}.tray.completed{animation-duration:220ms}
+
+/* 操作の進行に合わせた短い案内。高さを保ち、飛行の行き先を動かさない。 */
+.tutorial{flex-shrink:0;height:70px;padding:8px 12px;margin:2px 0 4px;border-left:2px solid #00afcc;background:#e2ecee80;border-radius:0 7px 7px 0}
+.tutorial strong{display:block;line-height:16px;font-size:11px;font-weight:600;color:#47636d;letter-spacing:.3px}.tutorial p{font-size:10px;line-height:1.6;margin:3px 0 0;color:#74858d}
+.game:has(.tutorial:not([hidden])){min-height:800px}
+.screw-button.lesson-target:after{content:'';position:absolute;inset:-3px;border:2px solid #00afcc88;border-radius:50%;animation:lesson-pulse 1.8s ease-in-out infinite;pointer-events:none}
+@keyframes lesson-pulse{50%{transform:scale(1.15);opacity:.45}}
+@media(max-height:790px){.game:has(.tutorial:not([hidden])){min-height:785px}}
+
+/* 案内のリングを金属の描画より手前に置く。 */
+.stage{z-index:6}

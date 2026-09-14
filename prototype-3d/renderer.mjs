@@ -36,6 +36,7 @@ function grainTexture(wood=false){
 export class MetalScene {
   constructor(stage,level,{onPull,onMove}={}){
     this.stage=stage;this.level=level;this.onPull=onPull;this.onMove=onMove;
+    this.inputAbort=new AbortController();this.visibleScrews=new Set();
     this.low=matchMedia('(pointer: coarse)').matches||new URLSearchParams(location.search).has('light');
     this.scene=new THREE.Scene();
     const canvas=document.createElement('canvas');
@@ -156,25 +157,26 @@ export class MetalScene {
   }
   bindInputs(){
     let down=null;
-    this.stage.addEventListener('pointerdown',e=>{
+    this.listen('pointerdown',e=>{
       if(this.locked||e.button!==0)return;
       down={id:e.pointerId,x:e.clientX,y:e.clientY,rx:this.targetRotation.x,ry:this.targetRotation.y,target:e.target.closest('[data-screw]')?.dataset.screw};
       this.stage.setPointerCapture(e.pointerId);
     });
-    this.stage.addEventListener('pointermove',e=>{
+    this.listen('pointermove',e=>{
       if(!down||e.pointerId!==down.id)return;
       const dx=e.clientX-down.x,dy=e.clientY-down.y;
       if(Math.hypot(dx,dy)>6){this.stage.classList.add('dragging');this.targetRotation.y=clamp(down.ry+dx*.007,-.85,.85);this.targetRotation.x=clamp(down.rx+dy*.006,-.70,.70);this.onMove?.();}
     });
-    this.stage.addEventListener('pointerup',e=>{
+    this.listen('pointerup',e=>{
       if(!down||e.pointerId!==down.id)return;
       const d=down;down=null;this.stage.classList.remove('dragging');
       if(this.stage.hasPointerCapture(e.pointerId))this.stage.releasePointerCapture(e.pointerId);
       if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<6&&d.target&&!this.inspectTarget)this.onPull?.(d.target);
     });
     const cancel=()=>{down=null;this.stage.classList.remove('dragging');};
-    this.stage.addEventListener('pointercancel',cancel);this.stage.addEventListener('lostpointercapture',cancel);
+    this.listen('pointercancel',cancel);this.listen('lostpointercapture',cancel);
   }
+  listen(type,handler){this.stage.addEventListener(type,handler,{signal:this.inputAbort.signal});}
   turn(delta){this.targetRotation.y=clamp(this.targetRotation.y+delta,-.85,.85);}
   resetView(){this.targetRotation={x:-.23,y:-.20};}
   setInspect(value){this.inspectTarget=value?1:0;this.targetRotation=value?{x:-.52,y:-.45}:{x:-.23,y:-.20};}
@@ -189,7 +191,7 @@ export class MetalScene {
   }
   async lift(id){
     const s=this.screws.get(id),r0=s.group.rotation.z;s.spinning=true;
-    await this.animate(140,t=>{s.group.rotation.z=r0+ease(t)*Math.PI*2;s.group.position.z=s.base.z+ease(t)*.48;});
+    await this.animate(140,t=>{s.group.rotation.z=r0+ease(t)*Math.PI*2;s.group.position.copy(s.base).addScaledVector(s.pullAxis??new THREE.Vector3(0,0,1),ease(t)*.48);});
     const pos=this.project(id);s.pulled=true;s.spinning=false;s.group.visible=false;return pos;
   }
   async flyScrew(id,destination){
@@ -222,11 +224,12 @@ export class MetalScene {
     for(const s of this.screws.values())if(!s.spinning)s.group.visible=!s.pulled&&(!s.covered||this.inspect>.1);
     for(let i=this.jobs.length-1;i>=0;i--){const j=this.jobs[i],t=clamp((now-j.start)/j.duration,0,1);j.update(t);if(t===1){this.jobs.splice(i,1);j.resolve();}}
     this.root.updateMatrixWorld(true);
-    for(const[id,s]of this.screws){if(!s.button)continue;s.button.hidden=s.pulled||s.covered||this.inspect>.08||!this.plates.get(s.plateId).group.visible;if(!s.button.hidden){const p=this.project(id);s.button.style.transform=`translate3d(${p.x}px,${p.y}px,0) translate(-50%,-50%)`;}}
+    this.visibleScrews.clear();
+    for(const[id,s]of this.screws){if(!s.button)continue;s.button.hidden=s.pulled||s.covered||this.inspect>.08||!this.plates.get(s.plateId).group.visible;if(!s.button.hidden){this.visibleScrews.add(id);const p=this.project(id);s.button.style.transform=`translate3d(${p.x}px,${p.y}px,0) translate(-50%,-50%)`;}}
     this.render();
   }
   dispose(){
-    this.renderer.setAnimationLoop(null);this.resizeObserver.disconnect();window.removeEventListener('resize',this.onResize);
+    this.renderer.setAnimationLoop(null);this.resizeObserver.disconnect();window.removeEventListener('resize',this.onResize);this.inputAbort.abort();
     const geometries=new Set(Object.values(this.geo)),materials=new Set([...Object.values(this.materials),...Object.values(this.washerMaterials)]);
     this.scene.traverse(o=>{if(o.isMesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);}});
     geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());this.environment.dispose();this.renderer.dispose();this.renderer.domElement.remove();
