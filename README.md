@@ -1,5 +1,7 @@
 # NEJI OFF — プロトタイプ
 
+**本番URL:** https://kaorikei.github.io/neji-off/ （main に push すると GitHub Actions が自動でテスト→検証→ビルド→公開）
+
 「ネジをタップして抜く × 同じ色のトレイに入れる」パズルの10面プロトタイプ。
 仕様書は Google Drive `01_個人/Game/Neji_Off/NEJI_OFF_spec.md`（v0.3）。
 
