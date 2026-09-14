@@ -1,0 +1,273 @@
+{
+  "level": {
+    "id": 1,
+    "bufferSize": 5,
+    "trays": [
+      "blue",
+      "red",
+      "yellow",
+      "blue",
+      "green",
+      "green"
+    ],
+    "plates": [
+      {
+        "id": "F",
+        "x": 60,
+        "y": 390,
+        "w": 260,
+        "h": 420,
+        "z": 0,
+        "color": "cream",
+        "screws": [
+          {
+            "x": 127,
+            "y": 526.2,
+            "color": "red",
+            "blockedBy": [],
+            "headSide": "inside",
+            "accessThrough": [
+              "R",
+              "T",
+              "D",
+              "L",
+              "B"
+            ]
+          },
+          {
+            "x": 253,
+            "y": 573,
+            "color": "yellow",
+            "blockedBy": [],
+            "headSide": "outside"
+          },
+          {
+            "x": 154,
+            "y": 667.2,
+            "color": "blue",
+            "blockedBy": [],
+            "headSide": "outside"
+          }
+        ]
+      },
+      {
+        "id": "R",
+        "x": 395,
+        "y": 390,
+        "w": 260,
+        "h": 420,
+        "z": 1,
+        "color": "grey",
+        "screws": [
+          {
+            "x": 463.8,
+            "y": 552,
+            "color": "blue",
+            "blockedBy": [],
+            "headSide": "outside"
+          },
+          {
+            "x": 586.2,
+            "y": 552,
+            "color": "yellow",
+            "blockedBy": [],
+            "headSide": "outside"
+          },
+          {
+            "x": 525,
+            "y": 663,
+            "color": "green",
+            "blockedBy": [],
+            "headSide": "outside"
+          }
+        ]
+      },
+      {
+        "id": "T",
+        "x": 730,
+        "y": 390,
+        "w": 260,
+        "h": 420,
+        "z": 2,
+        "color": "cream",
+        "screws": [
+          {
+            "x": 798.8,
+            "y": 555,
+            "color": "green",
+            "blockedBy": [],
+            "headSide": "outside"
+          },
+          {
+            "x": 921.2,
+            "y": 555,
+            "color": "blue",
+            "blockedBy": [],
+            "headSide": "outside"
+          },
+          {
+            "x": 860,
+            "y": 663,
+            "color": "green",
+            "blockedBy": [],
+            "headSide": "outside"
+          }
+        ]
+      },
+      {
+        "id": "D",
+        "x": 60,
+        "y": 900,
+        "w": 260,
+        "h": 420,
+        "z": 3,
+        "color": "grey",
+        "screws": [
+          {
+            "x": 263.8,
+            "y": 1158,
+            "color": "green",
+            "blockedBy": [],
+            "headSide": "inside",
+            "accessThrough": [
+              "F",
+              "R",
+              "T",
+              "L",
+              "B"
+            ]
+          },
+          {
+            "x": 116.2,
+            "y": 1074,
+            "color": "blue",
+            "blockedBy": [],
+            "headSide": "inside",
+            "accessThrough": [
+              "F",
+              "R",
+              "T",
+              "L",
+              "B"
+            ]
+          },
+          {
+            "x": 190,
+            "y": 1161,
+            "color": "red",
+            "blockedBy": [],
+            "headSide": "outside"
+          }
+        ]
+      },
+      {
+        "id": "L",
+        "x": 395,
+        "y": 900,
+        "w": 260,
+        "h": 420,
+        "z": 4,
+        "color": "cream",
+        "screws": [
+          {
+            "x": 598.8,
+            "y": 1062,
+            "color": "blue",
+            "blockedBy": [],
+            "headSide": "inside",
+            "accessThrough": [
+              "F",
+              "R",
+              "T",
+              "D",
+              "B"
+            ]
+          },
+          {
+            "x": 451.2,
+            "y": 1146,
+            "color": "yellow",
+            "blockedBy": [],
+            "headSide": "inside",
+            "accessThrough": [
+              "F",
+              "R",
+              "T",
+              "D",
+              "B"
+            ]
+          },
+          {
+            "x": 516,
+            "y": 1102.8,
+            "color": "green",
+            "blockedBy": [],
+            "headSide": "outside"
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "x": 730,
+        "y": 900,
+        "w": 260,
+        "h": 420,
+        "z": 5,
+        "color": "grey",
+        "screws": [
+          {
+            "x": 914,
+            "y": 1036.2,
+            "color": "blue",
+            "blockedBy": [],
+            "headSide": "inside",
+            "accessThrough": [
+              "F",
+              "R",
+              "T",
+              "D",
+              "L"
+            ]
+          },
+          {
+            "x": 795.2,
+            "y": 1086,
+            "color": "green",
+            "blockedBy": [],
+            "headSide": "outside"
+          },
+          {
+            "x": 896,
+            "y": 1177.2,
+            "color": "red",
+            "blockedBy": [],
+            "headSide": "outside"
+          }
+        ]
+      }
+    ]
+  },
+  "solution": [
+    "F-1",
+    "F-2",
+    "R-0",
+    "R-1",
+    "R-2",
+    "F-0",
+    "T-0",
+    "T-1",
+    "T-2",
+    "D-0",
+    "D-1",
+    "D-2",
+    "L-0",
+    "L-1",
+    "L-2",
+    "B-0",
+    "B-1",
+    "B-2"
+  ],
+  "rate": 0,
+  "min": 1,
+  "warnings": []
+}

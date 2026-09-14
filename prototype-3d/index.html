@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#edf0f1" />
+    <title>NEJI OFF — 金属のパズル</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="game" aria-label="NEJI OFF 金属のパズル">
+      <header class="header">
+        <h1>NEJI <span>OFF</span></h1>
+        <div class="header-tools"><span class="level">LEVEL <b>01</b></span><button class="icon-button" id="restart" aria-label="最初からやり直す" title="最初から">↻</button></div>
+      </header>
+      <div class="progress" role="progressbar" aria-label="抜いたビス" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><div id="progress-fill"></div></div>
+      <section class="collection" aria-label="同じ色を3本そろえるトレイ">
+        <div class="trays" id="trays"></div>
+        <div class="queue-line"><span>次のトレイ</span><div id="queue"></div><span class="remaining" id="remaining">残り6本</span></div>
+      </section>
+      <aside class="tutorial" id="tutorial" aria-label="チュートリアル" aria-live="polite" aria-atomic="true"><strong id="lesson-title"></strong><p id="lesson-text"></p></aside>
+      <section id="stage" class="stage" aria-label="ドラッグで傾けられる金属の平面パズル">
+        <div id="screw-buttons" class="screw-buttons"></div>
+        <div class="stage-error" id="stage-error" hidden></div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+      <div class="view-tools" aria-label="盤面の見方">
+        <button class="icon-button" id="turn-left" aria-label="左に回す">↶</button>
+        <button class="view-reset" id="view-reset" aria-label="視点を正面に戻す">正面に戻す</button>
+        <button class="icon-button" id="turn-right" aria-label="右に回す">↷</button>
+        <span class="tool-divider"></span>
+        <button class="structure-button" id="structure" aria-pressed="false">重なりを見る</button>
+      </div>
+      <section class="buffer-section" aria-label="ビスの一時置き場">
+        <div class="buffer-header"><h2>一時置き</h2><span id="buffer-count">空き <b>5</b></span></div>
+        <div class="buffer" id="buffer"></div>
+      </section>
+      <footer class="footer"><button id="undo" disabled>↶ 一手戻す</button><button id="sound" aria-pressed="true" aria-label="効果音をオフにする">音 ON</button></footer>
+      <a class="product-card" href="https://taiyouvis.com/" target="_blank" rel="noopener noreferrer" aria-label="タイヨウビス D6皿ドリルの公式サイトを別タブで開く">
+        <span class="product-copy"><strong>タイヨウビス</strong><span>D6皿ドリル <i>無溶接ビス</i></span></span>
+        <svg class="product-screw" viewBox="0 0 240 66" role="img" aria-label="皿ドリルビスのイラスト">
+          <defs><linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#eff2f4"/><stop offset=".40" stop-color="#9aa6af"/><stop offset=".62" stop-color="#dfe5e8"/><stop offset="1" stop-color="#6c7a85"/></linearGradient></defs>
+          <g transform="translate(16 35) rotate(-7)"><path d="M22-10H180l29 10-29 10H22L1 21V-21Z" fill="url(#steel)" stroke="#8a99a3" stroke-width=".7"/><path d="M22-10l8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20m4-20 8 20" fill="none" stroke="#64747e" stroke-width="1.6"/><path d="M180-10v20l10-11 19 1" fill="#7d8b95" opacity=".5"/><path d="M2-15v30" stroke="#455560" stroke-width="3"/></g>
+        </svg>
+        <span class="product-arrow" aria-hidden="true">↗</span>
+      </a>
+    </main>
+    <div class="result-backdrop" id="result" hidden>
+      <section class="result-card" role="dialog" aria-modal="true" aria-labelledby="result-title" tabindex="-1">
+        <p class="result-kicker" id="result-kicker">COMPLETE</p>
+        <h2 id="result-title">分解完了</h2>
+        <p id="result-text"></p>
+        <button class="primary-button" id="next" hidden>次のレベルへ</button>
+        <button class="primary-button" id="again">もう一度遊ぶ</button>
+        <button class="text-button" id="result-undo">一手戻して考える</button>
+      </section>
+    </div>
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>
