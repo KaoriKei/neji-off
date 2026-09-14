@@ -1,0 +1,25 @@
+{
+  "id": 4,
+  "plates": [
+    { "id": "A", "x": 120, "y": 980, "w": 840, "h": 480, "z": 0, "color": "milktea",
+      "screws": [
+        { "x": 240, "y": 1060, "color": "yellow" },
+        { "x": 880, "y": 1060, "color": "green" },
+        { "x": 200, "y": 1380, "color": "blue" },
+        { "x": 880, "y": 1380, "color": "yellow" }
+      ] },
+    { "id": "B", "x": 160, "y": 560, "w": 520, "h": 560, "z": 1, "color": "beige",
+      "screws": [
+        { "x": 240, "y": 640, "color": "green" },
+        { "x": 600, "y": 640, "color": "blue" },
+        { "x": 400, "y": 1040, "color": "blue" }
+      ] },
+    { "id": "C", "x": 520, "y": 460, "w": 440, "h": 540, "z": 2, "color": "sand",
+      "screws": [
+        { "x": 600, "y": 540, "color": "yellow" },
+        { "x": 880, "y": 540, "color": "green" }
+      ] }
+  ],
+  "trays": ["yellow", "green", "blue"],
+  "bufferSize": 5
+}

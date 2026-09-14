@@ -1,0 +1,19 @@
+{
+  "id": 2,
+  "plates": [
+    { "id": "A", "x": 160, "y": 700, "w": 760, "h": 520, "z": 0, "color": "greige",
+      "screws": [
+        { "x": 240, "y": 780, "color": "yellow" },
+        { "x": 820, "y": 780, "color": "green" },
+        { "x": 240, "y": 1140, "color": "green" },
+        { "x": 840, "y": 1140, "color": "yellow" }
+      ] },
+    { "id": "B", "x": 380, "y": 560, "w": 500, "h": 500, "z": 1, "color": "milktea",
+      "screws": [
+        { "x": 460, "y": 640, "color": "yellow" },
+        { "x": 800, "y": 980, "color": "green" }
+      ] }
+  ],
+  "trays": ["yellow", "green"],
+  "bufferSize": 5
+}
