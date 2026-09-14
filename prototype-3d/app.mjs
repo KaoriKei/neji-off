@@ -47,7 +47,7 @@ function createButtons(){
   const host=$('#screw-buttons');
   for(const s of puzzle.board.allScrews()){
     const button=document.createElement('button');button.type='button';button.className='screw-button';button.dataset.screw=s.id;
-    button.setAttribute('aria-label',`${COLORS[s.color].name}のネジ ${s.id}を抜く`);
+    button.setAttribute('aria-label',`${COLORS[s.color].name}のビス ${s.id}を抜く`);
     // ポインター操作は盤面が受け持つ。キーボードでも同じ操作ができる。
     button.addEventListener('click',e=>{if(e.detail===0)void pull(s.id);});host.append(button);view.screws.get(s.id).button=button;
   }
@@ -70,7 +70,7 @@ async function recoverBuffer(events){
 async function pull(id){
   if(busy||inspecting||!view||!result.hidden||!view.visibleScrews.has(id))return;
   const attempted=puzzle.pull(id);
-  if(!attempted.ok){tone('knock');say(attempted.reason==='covered'?'上に重なるパーツを先に外そう。':'一時置きがいっぱい。同じ色のトレイへ入るネジを探そう。',true);await view.shake(id);return;}
+  if(!attempted.ok){tone('knock');say(attempted.reason==='covered'?'上に重なるパーツを先に外そう。':'一時置きがいっぱい。同じ色のトレイへ入るビスを探そう。',true);await view.shake(id);return;}
   busy=true;view.locked=true;paintProgress();tone('lift');
   try{
     await view.lift(id);
@@ -104,17 +104,17 @@ async function pull(id){
   finally{busy=false;view.locked=false;paintAll();}
 }
 function showResult(clear){
-  $('#result-kicker').textContent=clear?'COMPLETE':'TAKE A BREATH';
-  $('#result-title').textContent=clear?'きれいに、ほどけた。':'少し、順番を変えてみよう。';
-  $('#result-text').textContent=clear?'6つの面と18本のネジ。\nキューブをすべて分解できました。':'6面を通して、抜けるネジの行き先がありません。\n一手戻して、別の順番を試せます。';
+  $('#result-kicker').textContent=clear?'COMPLETE':'TRY AGAIN';
+  $('#result-title').textContent=clear?'分解完了':'取り外す順番を見直そう';
+  $('#result-text').textContent=clear?'すべてのビスを取り外しました。':'抜けるビスを入れられる場所がありません。\n一手戻して、別の順番を試せます。';
   $('#result-undo').hidden=clear;result.hidden=false;lastFocus=document.activeElement;$('.game').inert=true;$('#again').focus();
 }
 function closeResult(){result.hidden=true;$('.game').inert=false;lastFocus?.focus();}
-function reset(){if(busy||pendingDrops.size)return;closeResult();puzzle.reset();display=puzzle.board.snapshot();inspecting=false;$('.game').classList.remove('inspect');$('#structure').setAttribute('aria-pressed','false');$('#structure').textContent='重なりを見る';view.setInspect(false);view.sync(puzzle.board);view.resetView();paintAll();say('ネジをタップ。同じ色を3本そろえよう。');}
-function undo(){if(busy||pendingDrops.size||inspecting)return;const previous=puzzle.history.at(-1);const undone=previous?.allScrews().find(s=>!s.pulled&&puzzle.board.getScrew(s.id).pulled);if(!puzzle.undo())return;closeResult();display=puzzle.board.snapshot();view.sync(puzzle.board);if(undone)view.focusFace(undone.plateId);paintAll();say('一手戻した。別の面のネジも探してみよう。');}
+function reset(){if(busy||pendingDrops.size)return;closeResult();puzzle.reset();display=puzzle.board.snapshot();inspecting=false;$('.game').classList.remove('inspect');$('#structure').setAttribute('aria-pressed','false');$('#structure').textContent='重なりを見る';view.setInspect(false);view.sync(puzzle.board);view.resetView();paintAll();say('ビスをタップ。同じ色を3本そろえよう。');}
+function undo(){if(busy||pendingDrops.size||inspecting)return;const previous=puzzle.history.at(-1);const undone=previous?.allScrews().find(s=>!s.pulled&&puzzle.board.getScrew(s.id).pulled);if(!puzzle.undo())return;closeResult();display=puzzle.board.snapshot();view.sync(puzzle.board);if(undone)view.focusFace(undone.plateId);paintAll();say('一手戻した。別の面のビスも探してみよう。');}
 $('#restart').addEventListener('click',reset);$('#again').addEventListener('click',reset);$('#undo').addEventListener('click',undo);$('#result-undo').addEventListener('click',undo);
 $('#turn-left').addEventListener('click',()=>view?.turn(-.30));$('#turn-right').addEventListener('click',()=>view?.turn(.30));$('#view-reset').addEventListener('click',()=>view?.resetView());
-$('#structure').addEventListener('click',()=>{if(busy||pendingDrops.size)return;inspecting=!inspecting;view.setInspect(inspecting);$('.game').classList.toggle('inspect',inspecting);$('#structure').setAttribute('aria-pressed',String(inspecting));$('#structure').textContent=inspecting?'重なりを閉じる':'重なりを見る';say(inspecting?'パーツの間を広げて確認中。閉じるとネジを抜けます。':'ネジをタップ。同じ色を3本そろえよう。');paintProgress();});
+$('#structure').addEventListener('click',()=>{if(busy||pendingDrops.size)return;inspecting=!inspecting;view.setInspect(inspecting);$('.game').classList.toggle('inspect',inspecting);$('#structure').setAttribute('aria-pressed',String(inspecting));$('#structure').textContent=inspecting?'重なりを閉じる':'重なりを見る';say(inspecting?'パーツの間を広げて確認中。閉じるとビスを抜けます。':'ビスをタップ。同じ色を3本そろえよう。');paintProgress();});
 $('#sound').addEventListener('click',()=>{sound=!sound;$('#sound').textContent=sound?'音 ON':'音 OFF';$('#sound').setAttribute('aria-pressed',String(sound));$('#sound').setAttribute('aria-label',sound?'効果音をオフにする':'効果音をオンにする');if(sound)tone('land');});
 result.addEventListener('keydown',e=>{if(e.key==='Tab'){const buttons=[...result.querySelectorAll('button:not([hidden])')];if(e.shiftKey&&document.activeElement===buttons[0]){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===buttons.at(-1)){e.preventDefault();buttons[0].focus();}}});
 paintAll();
