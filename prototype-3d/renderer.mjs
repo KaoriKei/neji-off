@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { COLORS } from './puzzle.ts';
+import { flightPosition } from './motion.mjs';
 
 const SCALE=1/120;
 const xy=(x,y)=>[(x-540)*SCALE,(890-y)*SCALE];
@@ -43,7 +44,9 @@ export class MetalScene {
       try{this.renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:!this.low,powerPreference});break;}catch(e){lastError=e;}
     }
     if(!this.renderer)throw lastError;
-    stage.prepend(canvas);canvas.setAttribute('aria-hidden','true');
+    // 盤面と飛行中のネジを同じ描画器で描き、トレイまで立体の姿を保つ。
+    document.body.append(canvas);canvas.className='scene-canvas';canvas.setAttribute('aria-hidden','true');
+    this.renderer.autoClear=false;
     this.renderer.setPixelRatio(this.low?1:Math.min(devicePixelRatio,1.8));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=.94;
     this.renderer.shadowMap.enabled=!this.low;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -54,6 +57,9 @@ export class MetalScene {
     key.shadow.mapSize.set(1536,1536);Object.assign(key.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.1,far:35});key.shadow.bias=-.0004;key.shadow.normalBias=.025;key.shadow.radius=4;this.scene.add(key);
     const fill=new THREE.DirectionalLight(0xe7f5ff,.35);fill.position.set(6,-1,8);this.scene.add(fill);
     this.scene.add(new THREE.HemisphereLight(0xffffff,0x95a4b1,.35));
+    this.flightScene=new THREE.Scene();this.flightScene.environment=this.environment.texture;
+    for(const light of this.scene.children.filter(o=>o.isLight)){const copy=light.clone();copy.castShadow=false;copy.position.multiplyScalar(1000);this.flightScene.add(copy);}
+    this.flightCamera=new THREE.OrthographicCamera(0,1,1,0,.1,2000);this.flightCamera.position.z=1000;
     this.root=new THREE.Group();this.scene.add(this.root);
     this.rotation={x:-.23,y:-.20};this.targetRotation={...this.rotation};this.root.rotation.set(this.rotation.x,this.rotation.y,0);
     const metal=grainTexture(),wood=grainTexture(true);this.textures=[metal,wood];
@@ -70,8 +76,11 @@ export class MetalScene {
     this.plates=new Map();this.screws=new Map();this.jobs=[];this.inspect=0;this.inspectTarget=0;this.locked=false;this.lastTime=performance.now();
     this.makeScrewGeometry();
     this.buildPuzzle();
+    // 最初の1本だけ描画準備で止まらないよう、飛行用の材質も先に準備する。
+    const warm=this.screws.values().next().value.group.clone();warm.traverse(o=>{o.castShadow=o.receiveShadow=false;});this.flightScene.add(warm);this.renderer.compile(this.flightScene,this.flightCamera);this.flightScene.remove(warm);
     this.bindInputs();
     this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(stage);this.resize();
+    this.onResize=()=>this.resize();window.addEventListener('resize',this.onResize);
     this.contextLost=e=>{e.preventDefault();this.locked=true;this.onContextLost?.();};canvas.addEventListener('webglcontextlost',this.contextLost);
     this.renderer.setAnimationLoop(t=>this.frame(t));
   }
@@ -123,11 +132,27 @@ export class MetalScene {
 
   resize(){
     const r=this.stage.getBoundingClientRect();this.width=r.width;this.height=r.height;
-    this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;
+    this.resizeCanvas();this.camera.aspect=r.width/r.height;
     const vertical=Math.max(9.6,9.2/this.camera.aspect);
     this.cameraDistance=vertical/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2)));
     this.camera.position.z=this.cameraDistance;
     this.camera.updateProjectionMatrix();this.camera.lookAt(0,0,0);
+  }
+  resizeCanvas(){
+    this.screenWidth=document.documentElement.clientWidth;this.screenHeight=window.innerHeight;
+    this.renderer.setSize(this.screenWidth,this.screenHeight,false);
+    this.flightCamera.right=this.screenWidth;this.flightCamera.top=this.screenHeight;this.flightCamera.updateProjectionMatrix();
+  }
+  render(){
+    const r=this.stage.getBoundingClientRect(),renderer=this.renderer;
+    renderer.setScissorTest(false);renderer.setViewport(0,0,this.screenWidth,this.screenHeight);renderer.clear();
+    renderer.setViewport(r.left,this.screenHeight-r.bottom,r.width,r.height);
+    renderer.setScissor(r.left,this.screenHeight-r.bottom,r.width,r.height);renderer.setScissorTest(true);
+    renderer.render(this.scene,this.camera);
+    if(this.flying){
+      renderer.setScissorTest(false);renderer.setViewport(0,0,this.screenWidth,this.screenHeight);renderer.clearDepth();renderer.render(this.flightScene,this.flightCamera);
+    }
+    renderer.setScissorTest(false);
   }
   bindInputs(){
     let down=null;
@@ -164,8 +189,22 @@ export class MetalScene {
   }
   async lift(id){
     const s=this.screws.get(id),r0=s.group.rotation.z;s.spinning=true;
-    await this.animate(320,t=>{s.group.rotation.z=r0+t*Math.PI*4;s.group.position.z=s.base.z+ease(t)*.62;});
+    await this.animate(140,t=>{s.group.rotation.z=r0+ease(t)*Math.PI*2;s.group.position.z=s.base.z+ease(t)*.48;});
     const pos=this.project(id);s.pulled=true;s.spinning=false;s.group.visible=false;return pos;
+  }
+  async flyScrew(id,destination){
+    const s=this.screws.get(id),mesh=s.group.clone(),origin=this.project(id),rect=this.stage.getBoundingClientRect();
+    const from={x:rect.left+origin.x,y:rect.top+origin.y};
+    const world=s.group.getWorldPosition(new THREE.Vector3()).applyMatrix4(this.camera.matrixWorldInverse);
+    const pixels=this.height/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2))*-world.z);
+    const startScale=s.group.getWorldScale(new THREE.Vector3()).x*pixels;
+    const startRotation=this.camera.quaternion.clone().invert().multiply(s.group.getWorldQuaternion(new THREE.Quaternion()));
+    const endRotation=new THREE.Quaternion(),spin=new THREE.Quaternion(),axis=new THREE.Vector3(0,0,1);
+    const targetScale=destination.diameter/.514;
+    mesh.visible=true;mesh.traverse(o=>{o.castShadow=o.receiveShadow=false;});this.flightScene.add(mesh);this.flying=mesh;
+    const update=t=>{const p=flightPosition(from,destination,t);mesh.position.set(p.x,this.screenHeight-p.y,0);mesh.scale.setScalar(THREE.MathUtils.lerp(startScale,targetScale,p.progress));mesh.quaternion.copy(startRotation).slerp(endRotation,p.progress).multiply(spin.setFromAxisAngle(axis,p.progress*Math.PI*2));};
+    update(0);
+    try{await this.animate(260,update);}finally{this.flightScene.remove(mesh);this.flying=null;}
   }
   async drop(id){
     const p=this.plates.get(id);p.falling=true;
@@ -183,13 +222,13 @@ export class MetalScene {
     for(const s of this.screws.values())if(!s.spinning)s.group.visible=!s.pulled&&(!s.covered||this.inspect>.1);
     for(let i=this.jobs.length-1;i>=0;i--){const j=this.jobs[i],t=clamp((now-j.start)/j.duration,0,1);j.update(t);if(t===1){this.jobs.splice(i,1);j.resolve();}}
     this.root.updateMatrixWorld(true);
-    for(const[id,s]of this.screws){if(!s.button)continue;s.button.hidden=s.pulled||s.covered||this.inspect>.08||!this.plates.get(s.plateId).group.visible;if(!s.button.hidden){const p=this.project(id);s.button.style.left=`${p.x}px`;s.button.style.top=`${p.y}px`;}}
-    this.renderer.render(this.scene,this.camera);
+    for(const[id,s]of this.screws){if(!s.button)continue;s.button.hidden=s.pulled||s.covered||this.inspect>.08||!this.plates.get(s.plateId).group.visible;if(!s.button.hidden){const p=this.project(id);s.button.style.transform=`translate3d(${p.x}px,${p.y}px,0) translate(-50%,-50%)`;}}
+    this.render();
   }
   dispose(){
-    this.renderer.setAnimationLoop(null);this.resizeObserver.disconnect();
+    this.renderer.setAnimationLoop(null);this.resizeObserver.disconnect();window.removeEventListener('resize',this.onResize);
     const geometries=new Set(Object.values(this.geo)),materials=new Set([...Object.values(this.materials),...Object.values(this.washerMaterials)]);
     this.scene.traverse(o=>{if(o.isMesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);}});
-    geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());this.environment.dispose();this.renderer.dispose();
+    geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());this.environment.dispose();this.renderer.dispose();this.renderer.domElement.remove();
   }
 }

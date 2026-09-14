@@ -25,7 +25,7 @@ export class CubeScene extends MetalScene {
   buildPuzzle(){
     this.homeQuaternion=new THREE.Quaternion().setFromEuler(new THREE.Euler(.53,-.58,0));
     this.targetQuaternion=this.homeQuaternion.clone();this.root.quaternion.copy(this.targetQuaternion);
-    this.raycaster=new THREE.Raycaster();this.blockerMeshes=[];this.currentFace=null;this.visibleScrews=new Set();
+    this.raycaster=new THREE.Raycaster();this.blockerMeshes=[];this.visibleScrews=new Set();
     for(const face of FACES)this.makeFace(face);
     this.root.updateMatrixWorld(true);
     for(const flap of FLAPS)this.makeFlap(flap);
@@ -67,7 +67,7 @@ export class CubeScene extends MetalScene {
     this.root.add(group);this.root.updateMatrixWorld(true);owner.group.attach(group);
   }
   resize(){
-    const r=this.stage.getBoundingClientRect();this.width=r.width;this.height=r.height;this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;
+    const r=this.stage.getBoundingClientRect();this.width=r.width;this.height=r.height;this.resizeCanvas();this.camera.aspect=r.width/r.height;
     const vertical=Math.max(7.8,7.8/this.camera.aspect);this.cameraDistance=vertical/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2)));
     this.camera.position.set(0,0,this.cameraDistance);this.camera.updateProjectionMatrix();this.camera.lookAt(0,0,0);
   }
@@ -106,7 +106,7 @@ export class CubeScene extends MetalScene {
   async drop(id){
     const p=this.plates.get(id);p.falling=true;
     const start=p.group.position.clone();
-    await this.animate(650,t=>{
+    await this.animate(420,t=>{
       const q=1-(1-t)**3;p.group.position.copy(start).addScaledVector(p.normal,q*3.1);p.group.position.y-=t*t*1.2;
       p.group.quaternion.copy(p.orientation).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(q*.35,q*.25,q*.12)));
     });p.group.visible=false;p.fallen=true;p.falling=false;
@@ -127,14 +127,12 @@ export class CubeScene extends MetalScene {
     for(let i=this.jobs.length-1;i>=0;i--){const j=this.jobs[i],t=clamp((now-j.start)/j.duration,0,1);j.update(t);if(t===1){this.jobs.splice(i,1);j.resolve();}}
     this.root.updateMatrixWorld(true);
     const blockers=this.blockerMeshes.filter(m=>{for(let o=m;o&&o!==this.root;o=o.parent)if(!o.visible)return false;return true;});
-    this.visibleScrews.clear();let best=null,score=-Infinity;
-    for(const[id,p]of this.plates){const f=this.facing(p);if(f>score){score=f;best=id;}}
-    if(best!==this.currentFace){this.currentFace=best;this.onFace?.(best);}
+    this.visibleScrews.clear();
     for(const[id,s]of this.screws){
       if(!s.button)continue;const p=this.plates.get(s.plateId);
       const visible=!s.pulled&&!s.covered&&this.inspect<.08&&p.group.visible&&this.facing(p)>.20&&this.unobstructed(s,blockers);
-      s.button.hidden=!visible;if(visible){this.visibleScrews.add(id);const pos=this.project(id);s.button.style.left=`${pos.x}px`;s.button.style.top=`${pos.y}px`;}
+      s.button.hidden=!visible;if(visible){this.visibleScrews.add(id);const pos=this.project(id);s.button.style.transform=`translate3d(${pos.x}px,${pos.y}px,0) translate(-50%,-50%)`;}
     }
-    this.renderer.render(this.scene,this.camera);
+    this.render();
   }
 }
