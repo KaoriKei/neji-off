@@ -7,14 +7,16 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "verify": "tsx scripts/verify-levels.ts"
+    "verify": "tsx scripts/verify-levels.ts",
+    "build:3d": "vite build --config prototype-3d/vite.config.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "three": "0.180.0"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",

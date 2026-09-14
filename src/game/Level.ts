@@ -10,6 +10,8 @@ export interface ScrewDef {
   x: number;
   y: number;
   color: Color;
+  /** 立体の別面など、座標の重なりで表せない覆い。空配列は覆いなし。 */
+  blockedBy?: string[];
 }
 
 export interface PlateDef {
@@ -88,6 +90,13 @@ export function validateLevel(level: LevelDef): string[] {
   }
 
   // 色ごとの本数は3の倍数、トレイ数は本数÷3
+  for (const p of level.plates) {
+    p.screws.forEach((s, i) => {
+      for (const id of s.blockedBy ?? []) {
+        if (!ids.has(id) || id === p.id) warns.push(`${tag} ネジ ${screwId(p.id, i)}: 覆いの板ID ${id} が不正`);
+      }
+    });
+  }
   const count: Record<string, number> = {};
   for (const p of level.plates) for (const s of p.screws) count[s.color] = (count[s.color] ?? 0) + 1;
   const trayCount: Record<string, number> = {};
@@ -104,6 +113,7 @@ export function validateLevel(level: LevelDef): string[] {
   for (const p of level.plates) {
     const uppers = level.plates.filter((q) => q.z > p.z);
     p.screws.forEach((s, i) => {
+      if (s.blockedBy !== undefined) return;
       for (const q of uppers) {
         const d = distanceToRectEdge(s.x, s.y, q);
         if (d < COVER_MARGIN) {

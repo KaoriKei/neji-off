@@ -77,6 +77,7 @@ export class Board {
   constructor(level: LevelDef, opts: { bufferSize?: number } = {}) {
     this.bufferSize = opts.bufferSize ?? level.bufferSize ?? DEFAULT_BUFFER;
     this.queue = [...level.trays];
+    const explicitCover = new Map<string, string[]>();
 
     for (const p of level.plates) {
       const plate: PlateState = {
@@ -87,6 +88,7 @@ export class Board {
         const screw: ScrewState = { id, plateId: p.id, x: s.x, y: s.y, color: s.color, pulled: false };
         this.screws.set(id, screw);
         this.screwList.push(screw);
+        if (s.blockedBy !== undefined) explicitCover.set(id, [...s.blockedBy]);
         plate.screwIds.push(id);
       });
       this.plates.set(p.id, plate);
@@ -98,7 +100,7 @@ export class Board {
     this.coverMap = new Map();
     for (const s of this.screwList) {
       const own = this.plates.get(s.plateId)!;
-      const covering = this.plateList.filter((q) => q.z > own.z && inRect(s.x, s.y, q)).map((q) => q.id);
+      const covering = explicitCover.get(s.id) ?? this.plateList.filter((q) => q.z > own.z && inRect(s.x, s.y, q)).map((q) => q.id);
       this.coverMap.set(s.id, covering);
     }
 
