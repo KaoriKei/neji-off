@@ -75,3 +75,76 @@ export function minBuffer(level: LevelDef, opts: { maxBuffer?: number; maxVisite
   }
   return { min: null, byBuffer };
 }
+
+// ---------- 難易度の目安（プレイアウト） ----------
+// 「素直に打つ人」と「でたらめに打つ人」を何百回も遊ばせて、詰む確率を測る。
+// 解けるかどうかだけでは分からない「引っかかりやすさ」の指標。
+
+/** 再現できる乱数（seed が同じなら同じ列） */
+export function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export type Policy = (b: Board, rng: () => number) => string | null;
+
+const pick = <T>(arr: T[], rng: () => number): T => arr[Math.floor(rng() * arr.length)];
+
+/** でたらめ：抜けるネジから均等に選ぶ */
+export const randomPolicy: Policy = (b, rng) => {
+  const m = b.pullableScrews();
+  return m.length ? pick(m, rng) : null;
+};
+
+/** 素直：トレイに入るネジがあればそれ（3本目になるものを優先）、無ければ仕方なく仮置き */
+export const greedyPolicy: Policy = (b, rng) => {
+  const m = b.pullableScrews();
+  if (m.length === 0) return null;
+  const toTray = m.filter((id) => b.findTray(b.getScrew(id)!.color) >= 0);
+  if (toTray.length > 0) {
+    const completing = toTray.filter((id) => {
+      const ti = b.findTray(b.getScrew(id)!.color);
+      return (b.trayAt(ti)?.count ?? 0) === 2;
+    });
+    return pick(completing.length > 0 ? completing : toTray, rng);
+  }
+  return pick(m, rng);
+};
+
+export interface PlayoutResult {
+  cleared: boolean;
+  moves: number;
+  /** 仮置き場の最大使用数 */
+  peakBuffer: number;
+}
+
+/** 1回遊ばせる */
+export function playout(level: LevelDef, policy: Policy, rng: () => number, bufferSize?: number): PlayoutResult {
+  const b = new Board(level, { bufferSize });
+  let moves = 0;
+  let peak = 0;
+  while (!b.isCleared() && !b.isStuck()) {
+    const id = policy(b, rng);
+    if (!id) break;
+    const r = b.pull(id);
+    if (!r.ok) break;
+    moves++;
+    peak = Math.max(peak, b.bufferUsed());
+    if (moves > 200) break;
+  }
+  return { cleared: b.isCleared(), moves, peakBuffer: peak };
+}
+
+/** n 回遊ばせて詰む確率（0〜1） */
+export function stuckRate(level: LevelDef, policy: Policy, n = 300, seed = 1, bufferSize?: number): number {
+  const rng = mulberry32(seed);
+  let stuck = 0;
+  for (let i = 0; i < n; i++) if (!playout(level, policy, rng, bufferSize).cleared) stuck++;
+  return stuck / n;
+}

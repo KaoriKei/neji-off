@@ -314,8 +314,8 @@ export function drawTileEmptyMark(g: G): void {
 }
 
 /** 仮置き場の赤い光る枠（普段 alpha 0） */
-export function drawBufferGlow(g: G): void {
-  const { x, y, w, h } = T.BUFFER_ROW;
+export function drawBufferGlow(g: G, n: number): void {
+  const { x, y, w, h } = T.bufferRow(n);
   g.clear();
   g.lineStyle(10, T.ALERT_RED, 1);
   g.strokeRoundedRect(x, y, w, h, 34);

@@ -14,9 +14,18 @@ npm run preview    # build した dist/ を確認
 ## 検証
 ```
 npm test           # Board / Solver の単体テスト（vitest）
-npm run verify     # 全10面を形式チェック＋解けるか＋最小仮置き数を算出（仕様 6.1 の表と照合）
+npm run verify     # 全10面を形式チェック＋解けるか＋最小仮置き数＋難易度指標（素直詰み率）を算出し、scripts/difficulty.ts の目標帯と照合
 npx tsx scripts/solution.ts 5   # 5面の正解手順・覆われたネジ・詰ませる手順を座標つきで出力（開発用）
 ```
+
+## レベル自動生成（開発用）
+```
+npx tsx scripts/generate-levels.ts 7 8 --seed 1          # 候補を探して指標を表示（書き込まない）
+npx tsx scripts/generate-levels.ts 3 4 5 6 7 8 9 10 --seed 1 --write   # 目標帯に一番近い候補を src/data/levels/ に書き出す
+```
+- 目標帯（穴数・最小仮置き数・素直詰み率・板とネジの数）は `scripts/difficulty.ts` で決める
+- 「素直詰み率」＝トレイに入るなら入れる／無理なら仮置き、という素直な打ち方で何回に1回詰むか（300回遊ばせて計測）
+- 1・2面は手作り（旧5・6面）。3〜10面は生成器の出力。seed を変えると別の配置になる
 
 ## 開発用URLパラメータ
 - `?level=7` … タイトルを飛ばして7面から始める（プレイヤー向けのレベル選択ではない）
@@ -36,7 +45,7 @@ src/
     Theme.ts         配色・レイアウト定数
   data/levels/       01.json … 10.json
 tests/               vitest
-scripts/             verify-levels.ts / solution.ts
+scripts/             verify-levels.ts / difficulty.ts / generate-levels.ts / solution.ts / autoplay.mjs
 assets/              画像差し替え用（今は空）
 ```
 

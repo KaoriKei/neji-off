@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import type { BoardEvent } from './Board';
 import type { Color } from './Level';
 import type { Game, ScrewView } from '../scenes/Game';
-import { BUFFER_X, BUFFER_Y, DEPTH, RING, SCREW_UI_SCALE, TRAY_HOLE_DX, TRAY_X, TRAY_Y } from './Theme';
+import { BUFFER_Y, DEPTH, RING, SCREW_UI_SCALE, TRAY_HOLE_DX, TRAY_X, TRAY_Y } from './Theme';
 
 /** 同じ場所（トレイ枠・仮置き場）に触る演出を順番待ちさせる小さな行列 */
 class Lane {
@@ -98,7 +98,7 @@ export class Juice {
         this.g.detachFromBoard(sv);
         await this.lift(sv);
         await this.bufferLane.run(async () => {
-          await this.fly(sv, BUFFER_X[e.bufferIndex], BUFFER_Y);
+          await this.fly(sv, this.g.bufferX(e.bufferIndex), BUFFER_Y);
           this.land(sv, this.g.bufferTiles[e.bufferIndex], DEPTH.trayScrew);
           this.g.refreshHud();
           this.g.bufferScrews[e.bufferIndex] = sv;
@@ -299,7 +299,7 @@ export class Juice {
       if (!sv) continue;
       this.g.bufferScrews[m.from] = null;
       this.g.bufferScrews[m.to] = sv;
-      ps.push(this.tween({ targets: sv.c, x: BUFFER_X[m.to], duration: 150, ease: 'Quad.easeInOut' }));
+      ps.push(this.tween({ targets: sv.c, x: this.g.bufferX(m.to), duration: 150, ease: 'Quad.easeInOut' }));
     }
     await Promise.all(ps);
     this.g.refreshHud();

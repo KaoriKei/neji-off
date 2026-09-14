@@ -46,7 +46,7 @@ export class Game extends Phaser.Scene {
   trayViews: (TrayView | null)[] = [null, null, null];
   bufferTiles: Phaser.GameObjects.Graphics[] = [];
   bufferMarks: Phaser.GameObjects.Graphics[] = [];
-  bufferScrews: (ScrewView | null)[] = [null, null, null, null, null];
+  bufferScrews: (ScrewView | null)[] = [];
   bufferGlow!: Phaser.GameObjects.Graphics;
   sparks!: Phaser.GameObjects.Particles.ParticleEmitter;
   confetti!: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -77,7 +77,7 @@ export class Game extends Phaser.Scene {
     this.trayViews = [null, null, null];
     this.bufferTiles = [];
     this.bufferMarks = [];
-    this.bufferScrews = [null, null, null, null, null];
+    this.bufferScrews = [];
     this.progress = { p: 0 };
 
     const level = LEVELS[this.levelIdx];
@@ -137,21 +137,23 @@ export class Game extends Phaser.Scene {
     this.refreshGhosts();
 
     // ---- 仮置き場 ----
-    this.add.text(T.BUFFER_ROW.x, T.BUFFER_LABEL_Y, '一時置き', TEXT(40)).setOrigin(0, 0.5).setDepth(T.DEPTH.ui);
-    const waku = this.add.text(T.BUFFER_ROW.x + T.BUFFER_ROW.w, T.BUFFER_LABEL_Y + 22, '枠', TEXT(36)).setOrigin(1, 1).setDepth(T.DEPTH.ui);
+    const nBuf = this.board.bufferSize;
+    this.bufferScrews = new Array<ScrewView | null>(nBuf).fill(null);
+    this.add.text(T.BUFFER_LABEL_X.left, T.BUFFER_LABEL_Y, '一時置き', TEXT(40)).setOrigin(0, 0.5).setDepth(T.DEPTH.ui);
+    const waku = this.add.text(T.BUFFER_LABEL_X.right, T.BUFFER_LABEL_Y + 22, '枠', TEXT(36)).setOrigin(1, 1).setDepth(T.DEPTH.ui);
     const num = this.add.text(0, T.BUFFER_LABEL_Y + 26, '5', TEXT(72, T.ORANGE_CSS)).setOrigin(1, 1).setDepth(T.DEPTH.ui);
     const ato = this.add.text(0, T.BUFFER_LABEL_Y + 22, 'あと', TEXT(36)).setOrigin(1, 1).setDepth(T.DEPTH.ui);
     this.bufferCount = { ato, num, waku };
-    for (let i = 0; i < 5; i++) {
-      const tile = this.add.graphics({ x: T.BUFFER_X[i], y: T.BUFFER_Y }).setDepth(T.DEPTH.ui);
+    for (let i = 0; i < nBuf; i++) {
+      const tile = this.add.graphics({ x: this.bufferX(i), y: T.BUFFER_Y }).setDepth(T.DEPTH.ui);
       D.drawTile(tile);
       this.bufferTiles.push(tile);
-      const mark = this.add.graphics({ x: T.BUFFER_X[i], y: T.BUFFER_Y }).setDepth(T.DEPTH.ui + 1);
+      const mark = this.add.graphics({ x: this.bufferX(i), y: T.BUFFER_Y }).setDepth(T.DEPTH.ui + 1);
       D.drawTileEmptyMark(mark);
       this.bufferMarks.push(mark);
     }
     this.bufferGlow = this.add.graphics().setDepth(T.DEPTH.ui + 2).setAlpha(0);
-    D.drawBufferGlow(this.bufferGlow);
+    D.drawBufferGlow(this.bufferGlow, nBuf);
     this.updateBufferCount();
 
     // ---- 商品カード ----
@@ -264,6 +266,11 @@ export class Game extends Phaser.Scene {
   }
 
   // ---------- 盤面 ⇄ 画面 ----------
+
+  /** 仮置き場 i 番目のタイルの中心 x */
+  bufferX(i: number): number {
+    return T.bufferX(i, this.board.bufferSize);
+  }
 
   /** レベル座標 → 画面座標 */
   toScreen(lx: number, ly: number): { x: number; y: number } {

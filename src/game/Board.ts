@@ -160,6 +160,16 @@ export class Board {
     return this.coveringPlates(id).length > 0;
   }
 
+  /** i 番目のトレイ枠の状態（無ければ null） */
+  trayAt(i: number): Readonly<TraySlot> | null {
+    return this.trays[i] ?? null;
+  }
+
+  /** 仮置き場の使用数 */
+  bufferUsed(): number {
+    return this.buffer.length;
+  }
+
   /** 同色トレイで空きのある一番左の枠。無ければ -1。 */
   findTray(color: Color): number {
     for (let i = 0; i < this.trays.length; i++) {

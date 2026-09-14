@@ -62,9 +62,17 @@ export const BOARD_OFFSET = { x: INNER.x - LEVEL_REGION.x * BOARD_SCALE, y: INNE
 
 export const BUFFER_LABEL_Y = 1494;
 export const BUFFER_Y = 1592;
-export const BUFFER_X = [190, 365, 540, 715, 890];
 export const BUFFER_TILE = 132;
-export const BUFFER_ROW = { x: 110, y: 1516, w: 860, h: 152 };
+export const BUFFER_GAP = 175;
+/** i 番目のタイルの中心 x（n 枚を中央寄せ） */
+export const bufferX = (i: number, n: number): number => 540 + (i - (n - 1) / 2) * BUFFER_GAP;
+/** 仮置き場の行（赤枠・ラベルの基準）。n 枚ぶんの幅 */
+export const bufferRow = (n: number): { x: number; y: number; w: number; h: number } => {
+  const w = (n - 1) * BUFFER_GAP + BUFFER_TILE + 44;
+  return { x: 540 - w / 2, y: 1516, w, h: 152 };
+};
+/** ラベル「一時置き」「あと N 枠」の左右端 */
+export const BUFFER_LABEL_X = { left: 110, right: 970 };
 
 export const PRODUCT = { x: 60, y: 1692, w: 960, h: 160 };
 export const FOOTER_Y = 1888;

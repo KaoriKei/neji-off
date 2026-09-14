@@ -1,40 +1,98 @@
 {
   "id": 7,
   "plates": [
-    { "id": "A", "x": 120, "y": 1000, "w": 840, "h": 460, "z": 0, "color": "cream",
+    {
+      "id": "A",
+      "x": 230,
+      "y": 460,
+      "w": 770,
+      "h": 720,
+      "z": 0,
+      "color": "mint",
       "screws": [
-        { "x": 260, "y": 1080, "color": "yellow" },
-        { "x": 880, "y": 1060, "color": "red" },
-        { "x": 200, "y": 1380, "color": "green" },
-        { "x": 880, "y": 1380, "color": "yellow" }
-      ] },
-    { "id": "B", "x": 180, "y": 760, "w": 520, "h": 420, "z": 1, "color": "mint",
+        { "x": 644, "y": 1100, "color": "yellow" },
+        { "x": 384, "y": 850, "color": "blue" },
+        { "x": 654, "y": 574, "color": "red" },
+        { "x": 824, "y": 914, "color": "red" }
+      ]
+    },
+    {
+      "id": "B",
+      "x": 150,
+      "y": 590,
+      "w": 440,
+      "h": 350,
+      "z": 1,
+      "color": "cream",
       "screws": [
-        { "x": 260, "y": 840, "color": "blue" },
-        { "x": 400, "y": 860, "color": "yellow" },
-        { "x": 630, "y": 920, "color": "yellow" },
-        { "x": 440, "y": 1100, "color": "red" }
-      ] },
-    { "id": "C", "x": 520, "y": 600, "w": 420, "h": 520, "z": 2, "color": "grey",
+        { "x": 214, "y": 724, "color": "red" },
+        { "x": 444, "y": 654, "color": "green" }
+      ]
+    },
+    {
+      "id": "C",
+      "x": 320,
+      "y": 720,
+      "w": 430,
+      "h": 280,
+      "z": 2,
+      "color": "lavender",
       "screws": [
-        { "x": 640, "y": 680, "color": "green" },
-        { "x": 860, "y": 680, "color": "red" },
-        { "x": 740, "y": 1040, "color": "blue" },
-        { "x": 860, "y": 920, "color": "blue" }
-      ] },
-    { "id": "D", "x": 140, "y": 480, "w": 440, "h": 440, "z": 3, "color": "lavender",
+        { "x": 544, "y": 934, "color": "red" }
+      ]
+    },
+    {
+      "id": "D",
+      "x": 220,
+      "y": 1020,
+      "w": 500,
+      "h": 370,
+      "z": 3,
+      "color": "cream",
       "screws": [
-        { "x": 220, "y": 560, "color": "blue" },
-        { "x": 520, "y": 560, "color": "green" },
-        { "x": 520, "y": 800, "color": "yellow" }
-      ] },
-    { "id": "E", "x": 460, "y": 400, "w": 480, "h": 460, "z": 4, "color": "cream",
+        { "x": 344, "y": 1254, "color": "blue" },
+        { "x": 624, "y": 1314, "color": "green" },
+        { "x": 494, "y": 1104, "color": "green" }
+      ]
+    },
+    {
+      "id": "E",
+      "x": 420,
+      "y": 1010,
+      "w": 460,
+      "h": 400,
+      "z": 4,
+      "color": "lavender",
       "screws": [
-        { "x": 540, "y": 480, "color": "yellow" },
-        { "x": 860, "y": 480, "color": "blue" },
-        { "x": 700, "y": 680, "color": "blue" }
-      ] }
+        { "x": 814, "y": 1284, "color": "yellow" },
+        { "x": 524, "y": 1264, "color": "yellow" },
+        { "x": 784, "y": 1104, "color": "red" },
+        { "x": 724, "y": 1214, "color": "blue" }
+      ]
+    },
+    {
+      "id": "F",
+      "x": 150,
+      "y": 800,
+      "w": 570,
+      "h": 360,
+      "z": 5,
+      "color": "grey",
+      "screws": [
+        { "x": 274, "y": 1094, "color": "yellow" },
+        { "x": 644, "y": 874, "color": "red" },
+        { "x": 394, "y": 1054, "color": "yellow" },
+        { "x": 244, "y": 944, "color": "yellow" }
+      ]
+    }
   ],
-  "trays": ["yellow", "red", "yellow", "blue", "green", "blue"],
-  "bufferSize": 5
+  "trays": [
+    "green",
+    "blue",
+    "red",
+    "red",
+    "yellow",
+    "yellow"
+  ],
+  "bufferSize": 4
 }

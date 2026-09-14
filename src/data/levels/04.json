@@ -1,25 +1,83 @@
 {
   "id": 4,
   "plates": [
-    { "id": "A", "x": 120, "y": 980, "w": 840, "h": 480, "z": 0, "color": "lavender",
+    {
+      "id": "A",
+      "x": 120,
+      "y": 580,
+      "w": 890,
+      "h": 640,
+      "z": 0,
+      "color": "grey",
       "screws": [
-        { "x": 240, "y": 1060, "color": "yellow" },
-        { "x": 880, "y": 1060, "color": "green" },
-        { "x": 200, "y": 1380, "color": "blue" },
-        { "x": 880, "y": 1380, "color": "yellow" }
-      ] },
-    { "id": "B", "x": 160, "y": 560, "w": 520, "h": 560, "z": 1, "color": "cream",
+        { "x": 914, "y": 1104, "color": "red" },
+        { "x": 854, "y": 784, "color": "yellow" },
+        { "x": 284, "y": 1154, "color": "blue" },
+        { "x": 614, "y": 1144, "color": "red" }
+      ]
+    },
+    {
+      "id": "B",
+      "x": 130,
+      "y": 870,
+      "w": 620,
+      "h": 500,
+      "z": 1,
+      "color": "cream",
       "screws": [
-        { "x": 240, "y": 640, "color": "green" },
-        { "x": 600, "y": 640, "color": "blue" },
-        { "x": 400, "y": 1040, "color": "blue" }
-      ] },
-    { "id": "C", "x": 520, "y": 460, "w": 440, "h": 540, "z": 2, "color": "mint",
+        { "x": 324, "y": 1004, "color": "blue" },
+        { "x": 484, "y": 1214, "color": "blue" },
+        { "x": 584, "y": 1034, "color": "green" },
+        { "x": 214, "y": 964, "color": "yellow" }
+      ]
+    },
+    {
+      "id": "C",
+      "x": 300,
+      "y": 520,
+      "w": 670,
+      "h": 350,
+      "z": 2,
+      "color": "cream",
       "screws": [
-        { "x": 600, "y": 540, "color": "yellow" },
-        { "x": 880, "y": 540, "color": "green" }
-      ] }
+        { "x": 654, "y": 734, "color": "yellow" },
+        { "x": 494, "y": 614, "color": "green" }
+      ]
+    },
+    {
+      "id": "D",
+      "x": 400,
+      "y": 860,
+      "w": 420,
+      "h": 410,
+      "z": 3,
+      "color": "mint",
+      "screws": [
+        { "x": 464, "y": 964, "color": "yellow" },
+        { "x": 754, "y": 1134, "color": "red" },
+        { "x": 614, "y": 924, "color": "green" },
+        { "x": 474, "y": 1094, "color": "yellow" }
+      ]
+    },
+    {
+      "id": "E",
+      "x": 560,
+      "y": 600,
+      "w": 390,
+      "h": 380,
+      "z": 4,
+      "color": "lavender",
+      "screws": [
+        { "x": 764, "y": 894, "color": "yellow" }
+      ]
+    }
   ],
-  "trays": ["yellow", "green", "blue"],
-  "bufferSize": 5
+  "trays": [
+    "red",
+    "green",
+    "blue",
+    "yellow",
+    "yellow"
+  ],
+  "bufferSize": 4
 }

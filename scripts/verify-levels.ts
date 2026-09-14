@@ -1,20 +1,13 @@
-// npm run verify — 全レベルの形式チェック＋解けるか＋最小仮置き数を検証する（開発時のみ）
+// npm run verify — 全レベルの形式チェック＋解けるか＋最小仮置き数＋難易度の目安を検証する（開発時のみ）
 import { LEVELS } from '../src/data/levels/index';
 import { validateLevel } from '../src/game/Level';
-import { minBuffer, solve } from '../src/game/Solver';
-
-// 仕様 6.1 の「最小仮置き数」の許容範囲
-const EXPECTED: Record<number, [number, number]> = {
-  1: [0, 0], 2: [0, 0], 3: [0, 0], 4: [0, 0],
-  5: [1, 2], 6: [1, 2],
-  7: [2, 3], 8: [2, 3], 9: [2, 3],
-  10: [3, 4],
-};
+import { greedyPolicy, minBuffer, randomPolicy, solve, stuckRate } from '../src/game/Solver';
+import { bandOf } from './difficulty';
 
 let ng = 0;
 const rows: string[] = [];
-rows.push('面 | 板 | ネジ | 色 | 最小仮置き | 期待 | 手順長 | 状態数 | 判定');
-rows.push('---|---|---|---|---|---|---|---|---');
+rows.push('面 | 板 | ネジ | 色 | 穴 | 最小仮置き | 期待 | 素直詰み% | 期待 | でたらめ詰み% | 状態数 | 判定');
+rows.push('---|---|---|---|---|---|---|---|---|---|---|---');
 
 for (const lv of LEVELS) {
   const warns = validateLevel(lv);
@@ -25,20 +18,24 @@ for (const lv of LEVELS) {
   const colors = new Set(lv.plates.flatMap((p) => p.screws.map((s) => s.color))).size;
   const full = solve(lv);
   const mb = minBuffer(lv);
-  const exp = EXPECTED[lv.id];
-  let verdict = 'OK';
-  if (!full.solvable) {
-    verdict = full.aborted ? '打ち切り' : '解けない';
-    ng++;
-  } else if (mb.min === null) {
-    verdict = '最小仮置き算出不能';
-    ng++;
-  } else if (exp && (mb.min < exp[0] || mb.min > exp[1])) {
-    verdict = `期待外(${exp[0]}〜${exp[1]})`;
-    ng++;
+  const band = bandOf(lv.id);
+  const g = stuckRate(lv, greedyPolicy, 400, 7);
+  const r = stuckRate(lv, randomPolicy, 400, 7);
+  const bufferSize = lv.bufferSize ?? 5;
+
+  const problems: string[] = [];
+  if (!full.solvable) problems.push(full.aborted ? '打ち切り' : '解けない');
+  else if (mb.min === null) problems.push('最小仮置き算出不能');
+  if (band) {
+    if (bufferSize !== band.bufferSize) problems.push(`穴数${bufferSize}≠${band.bufferSize}`);
+    if (mb.min !== null && (mb.min < band.minBuf[0] || mb.min > band.minBuf[1])) problems.push('最小仮置きが期待外');
+    if (g < band.greedy[0] || g > band.greedy[1]) problems.push('素直詰み率が期待外');
   }
+  if (problems.length > 0) ng++;
+
+  const pct = (v: number): string => `${Math.round(v * 100)}`;
   rows.push(
-    `${lv.id} | ${lv.plates.length} | ${screws} | ${colors} | ${mb.min ?? '-'} | ${exp ? `${exp[0]}〜${exp[1]}` : '-'} | ${full.moves.length} | ${full.visited} | ${verdict}`,
+    `${lv.id} | ${lv.plates.length} | ${screws} | ${colors} | ${bufferSize} | ${mb.min ?? '-'} | ${band ? `${band.minBuf[0]}〜${band.minBuf[1]}` : '-'} | ${pct(g)} | ${band ? `${pct(band.greedy[0])}〜${pct(band.greedy[1])}` : '-'} | ${pct(r)} | ${full.visited} | ${problems.length ? problems.join('・') : 'OK'}`,
   );
 }
 
