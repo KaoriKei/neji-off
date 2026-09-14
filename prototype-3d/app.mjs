@@ -1,17 +1,20 @@
-import { Campaign } from './campaign.ts';
+import { Campaign, STAGES } from './campaign.ts';
 import { COLORS } from './puzzle.ts';
 import { CubeScene } from './cube-renderer.mjs';
 import { FlatScene } from './flat-renderer.mjs';
 import { flightPosition } from './motion.mjs';
 
 const $=selector=>document.querySelector(selector);
-const puzzle=new Campaign(),stage=$('#stage'),result=$('#result');
+// 開発用の直接表示は公開ビルドに含めない。通常は必ずLv1から始める。
+const initialLevel=import.meta.env.DEV?Number(new URLSearchParams(location.search).get('level')??1):1;
+const puzzle=new Campaign(initialLevel),stage=$('#stage'),result=$('#result');
 const pendingDrops=new Set();
 let view,busy=false,inspecting=false,sound=true,audioContext,display=puzzle.board.snapshot(),lastFocus=null;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const wait=ms=>new Promise(r=>setTimeout(r,reduced?Math.min(ms,50):ms));
 const screwMarkup=color=>`<span class="mini-screw" style="--screw-color:${COLORS[color].hex}" aria-hidden="true"></span>`;
-function say(text,alert=false){$('#status').textContent=text;$('#status').classList.toggle('alert',alert);}
+let statusTimer;
+function say(text='',alert=false){clearTimeout(statusTimer);$('#status').textContent=text;$('#status').classList.toggle('alert',alert);if(text&&!inspecting)statusTimer=setTimeout(()=>say(),3500);}
 function tone(kind){
   if(!sound)return;
   try{
@@ -27,12 +30,12 @@ function paintTrays(){
     const c=t?COLORS[t.color]:null;
     return `<div class="tray ${t?'':'empty'}" data-tray="${i}" style="--tray-color:${c?.hex??'#bfc8cd'}" aria-label="${c?`${c.name}のトレイ ${t.count}/3`:'空のトレイ'}"><div class="tray-holes">${[0,1,2].map(n=>`<span class="hole" data-slot="${n}">${t&&n<t.count?screwMarkup(t.color):''}</span>`).join('')}</div></div>`;
   }).join('');
-  $('#queue').innerHTML=display.queue.map(c=>`<span class="queue-dot" style="--screw-color:${COLORS[c].hex}" aria-label="${COLORS[c].name}"></span>`).join('')||'<span>—</span>';
+  $('#queue').innerHTML=display.queue.slice(0,4).map(c=>`<span class="queue-dot" style="--screw-color:${COLORS[c].hex}" aria-label="${COLORS[c].name}"></span>`).join('')||'<span>—</span>';
 }
 function paintBuffer(){
   const ids=display.buffer;
   $('#buffer').innerHTML=Array.from({length:puzzle.board.bufferSize},(_,i)=>`<div class="buffer-slot" data-buffer="${i}" aria-label="一時置き ${i+1}: ${ids[i]?COLORS[puzzle.board.getScrew(ids[i]).color].name:'空き'}">${ids[i]?screwMarkup(puzzle.board.getScrew(ids[i]).color):''}</div>`).join('');
-  $('#buffer-count').innerHTML=`あと <b>${puzzle.board.bufferSize-ids.length}</b> 枠`;
+  $('#buffer-count').innerHTML=`空き <b>${puzzle.board.bufferSize-ids.length}</b>`;
   $('.buffer-section').classList.toggle('danger',ids.length>=puzzle.board.bufferSize-1);
 }
 function paintProgress(){
@@ -78,7 +81,7 @@ async function pull(id){
   if(busy||inspecting||!view||!result.hidden||!view.visibleScrews.has(id))return;
   const attempted=puzzle.pull(id);
   if(!attempted.ok){tone('knock');say(attempted.reason==='covered'?'上に重なるパーツを先に外そう。':'一時置きがいっぱい。同じ色のトレイへ入るビスを探そう。',true);await view.shake(id);return;}
-  busy=true;view.locked=true;paintProgress();tone('lift');
+  busy=true;view.locked=true;say();paintProgress();tone('lift');
   try{
     await view.lift(id);
     for(let i=0;i<attempted.events.length;i++){
@@ -89,13 +92,12 @@ async function pull(id){
         if(e.type==='screwToTray')display.trays[e.trayIndex].count++;
         else display.buffer.push(id);
         paintTrays();paintBuffer();land(selector);
-        say(e.type==='screwToBuffer'?'次のトレイが来るまで、ここで待機。':'あと何本でそろうか、次の色も見てみよう。');
       }else if(e.type==='plateDropped'){
         tone('plate');const drop=view.drop(e.plateId);pendingDrops.add(drop);
         void drop.finally(()=>{pendingDrops.delete(drop);paintProgress();});
-        view.setCovered(puzzle.board);say(puzzle.stage.kind==='cube'?'パネルが外れた。開いたところから、内側のビスも探そう。':'パーツが外れた。下に隠れていたビスを確認しよう。');
+        view.setCovered(puzzle.board);
       }else if(e.type==='trayCompleted'){
-        tone('complete');$(`[data-tray="${e.trayIndex}"]`).classList.add('completed');await wait(220);display.trays[e.trayIndex]=null;paintTrays();say('3本そろった。次のトレイへ。');
+        tone('complete');$(`[data-tray="${e.trayIndex}"]`).classList.add('completed');await wait(220);display.trays[e.trayIndex]=null;paintTrays();
       }else if(e.type==='trayArrived'){
         display.trays[e.trayIndex]={color:e.color,count:0};display.queue.shift();paintTrays();$(`[data-tray="${e.trayIndex}"]`).classList.add('arrived');await wait(120);
       }else if(e.type==='bufferSucked'){
@@ -114,7 +116,7 @@ function showResult(clear){
   $('#result-kicker').textContent=clear?`LEVEL ${String(puzzle.index+1).padStart(2,'0')} COMPLETE`:'TRY AGAIN';
   $('#result-title').textContent=clear?'分解完了':'取り外す順番を見直そう';
   const next=puzzle.index===1?'次は、キューブの6面を分解します。':puzzle.index===0?'次は、パーツの重なりと一時置きに挑戦。':'次は、色と取り外す順番を見極めよう。';
-  $('#result-text').textContent=clear?`すべてのビスを取り外しました。${puzzle.isLast?'\n全4レベルをクリア。':'\n'+next}`:'抜けるビスを入れられる場所がありません。\n一手戻して、別の順番を試せます。';
+  $('#result-text').textContent=clear?(puzzle.isLast?`全${STAGES.length}レベルをクリア。`:puzzle.index<2?next:`次は、${STAGES[puzzle.index+1].name}。`):'一時置きがいっぱいです。\n一手戻して、別の順番を試せます。';
   $('#next').hidden=!clear||puzzle.isLast;$('#next').textContent=`LEVEL ${String(puzzle.index+2).padStart(2,'0')} へ進む`;
   $('#again').textContent=clear&&puzzle.isLast?'最初から遊ぶ':'このレベルをやり直す';
   $('#again').className=clear&&!puzzle.isLast?'text-button':'primary-button';
@@ -128,17 +130,17 @@ function reset(){
   if(busy||pendingDrops.size)return;
   const startOver=!result.hidden&&puzzle.isLast&&puzzle.board.isCleared();closeResult();
   if(startOver){puzzle.startOver();initLevel();return;}
-  puzzle.reset();display=puzzle.board.snapshot();clearInspect();view.sync(puzzle.board);view.resetView();paintAll();say('ビスをタップ。同じ色を3本そろえよう。');
+  puzzle.reset();display=puzzle.board.snapshot();clearInspect();view.sync(puzzle.board);view.resetView();paintAll();say();
 }
 function undo(){
   if(busy||pendingDrops.size||inspecting)return;const previous=puzzle.history.at(-1),undone=previous?.allScrews().find(s=>!s.pulled&&puzzle.board.getScrew(s.id).pulled);
-  if(!puzzle.undo())return;closeResult();display=puzzle.board.snapshot();view.sync(puzzle.board);if(undone)view.focusScrew?.(undone.id);paintAll();say('一手戻した。別の順番を試してみよう。');
+  if(!puzzle.undo())return;closeResult();display=puzzle.board.snapshot();view.sync(puzzle.board);if(undone)view.focusScrew?.(undone.id);paintAll();say('一手戻しました');
 }
 $('#restart').addEventListener('click',reset);$('#again').addEventListener('click',reset);$('#undo').addEventListener('click',undo);$('#result-undo').addEventListener('click',undo);
 $('#next').addEventListener('click',()=>{if(busy||pendingDrops.size||!puzzle.advance())return;closeResult();initLevel();});
 function rotated(){if(puzzle.stage.kind==='cube'&&!puzzle.learned.has('rotated')){puzzle.learned.add('rotated');paintTutorial();}}
 $('#turn-left').addEventListener('click',()=>{view?.turn(-.30);rotated();});$('#turn-right').addEventListener('click',()=>{view?.turn(.30);rotated();});$('#view-reset').addEventListener('click',()=>view?.resetView());
-$('#structure').addEventListener('click',()=>{if(busy||pendingDrops.size)return;inspecting=!inspecting;view.setInspect(inspecting);$('.game').classList.toggle('inspect',inspecting);$('#structure').setAttribute('aria-pressed',String(inspecting));$('#structure').textContent=inspecting?'重なりを閉じる':'重なりを見る';say(inspecting?(puzzle.stage.kind==='cube'?'内締めのビスは頭が内側、ねじ山が外側。閉じると操作できます。':'パーツの間を広げて確認中。閉じるとビスを抜けます。'):'ビスをタップ。同じ色を3本そろえよう。');paintProgress();paintTutorial();});
+$('#structure').addEventListener('click',()=>{if(busy||pendingDrops.size)return;inspecting=!inspecting;view.setInspect(inspecting);$('.game').classList.toggle('inspect',inspecting);$('#structure').setAttribute('aria-pressed',String(inspecting));$('#structure').textContent=inspecting?'重なりを閉じる':'重なりを見る';say(inspecting?'確認中 · 閉じると操作できます':'');paintProgress();paintTutorial();});
 $('#sound').addEventListener('click',()=>{sound=!sound;$('#sound').textContent=sound?'音 ON':'音 OFF';$('#sound').setAttribute('aria-pressed',String(sound));$('#sound').setAttribute('aria-label',sound?'効果音をオフにする':'効果音をオンにする');if(sound)tone('land');});
 result.addEventListener('keydown',e=>{if(e.key==='Tab'){const buttons=[...result.querySelectorAll('button:not([hidden])')];if(e.shiftKey&&document.activeElement===buttons[0]){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===buttons.at(-1)){e.preventDefault();buttons[0].focus();}}});
 function initLevel(){
@@ -148,12 +150,9 @@ function initLevel(){
   const tutorial=$('#tutorial');tutorial.classList.toggle('floating',!cube);
   if(cube)stage.before(tutorial);else stage.prepend(tutorial);
   $('.level b').textContent=String(puzzle.index+1).padStart(2,'0');
-  $('.stage-caption').textContent=`MATTE METAL / ${cube?'CUBE':'FLAT'} ${String(puzzle.index+1).padStart(2,'0')}`;
   stage.setAttribute('aria-label',cube?'ドラッグで360度回転できる金属のキューブ':'ドラッグで傾けられる金属の平面パズル');
-  $('.buffer-header small').textContent=cube?'6面で共有':'トレイが来るまで待機';
-  $('.drag-note').textContent=cube?'ドラッグで360°回転':'ドラッグで傾ける';
   $('#restart').setAttribute('aria-label','このレベルをやり直す');$('#restart').title='このレベルをやり直す';
-  paintAll();say(cube?'開いた面から内側ものぞこう。ビスは頭の側から抜けます。':'ビスをタップ。同じ色を3本そろえよう。');
+  paintAll();say();
   try{
     view=new (cube?CubeScene:FlatScene)(stage,puzzle.level,{onPull:pull,onMove:rotated});view.sync(puzzle.board);createButtons();paintTutorial();
     view.onContextLost=()=>{busy=true;paintProgress();const el=$('#stage-error');el.hidden=false;el.innerHTML='<p>3D表示が中断しました。<br><button id="reload-3d">画面を開き直す</button></p>';$('#reload-3d').onclick=()=>location.reload();};

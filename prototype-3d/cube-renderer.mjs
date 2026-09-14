@@ -1,9 +1,10 @@
 // 六面の向き、隣の面へ折り返す留め具、自由回転を担当する。
 import * as THREE from 'three';
 import { MetalScene, roundedShape, circularHole, extrude } from './renderer.mjs';
-import { FACES, FLAPS } from './cube-model.ts';
+import { FLAPS } from './cube-model.ts';
 import { mountFastener } from './fastener-mount.mjs';
 import { nearestScrew } from './screw-hit.mjs';
+import { cubePanels } from './layered-cube.ts';
 
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const Z=new THREE.Vector3(0,0,1),X=new THREE.Vector3(1,0,0),Y=new THREE.Vector3(0,1,0);
@@ -28,25 +29,33 @@ export class CubeScene extends MetalScene {
     this.homeQuaternion=new THREE.Quaternion().setFromEuler(new THREE.Euler(.53,-.58,0));
     this.targetQuaternion=this.homeQuaternion.clone();this.root.quaternion.copy(this.targetQuaternion);
     this.raycaster=new THREE.Raycaster();this.blockerMeshes=[];this.visibleScrews=new Set();
-    for(const face of FACES)this.makeFace(face);
+    for(const panel of cubePanels(this.level))this.makeFace(panel);
     this.root.updateMatrixWorld(true);
-    for(const flap of FLAPS)if(this.level.plates.find(p=>p.id===flap.to).screws[flap.screw].headSide==='inside')this.makeFlap(flap);
+    if(!this.level.covers?.length)for(const flap of FLAPS)if(this.level.plates.find(p=>p.id===flap.to).screws[flap.screw].headSide==='inside')this.makeFlap(flap);
+    for(const panel of this.plates.values())if(panel.face.parentId)this.makeSpacers(panel.face);
   }
   makeFace(face){
     const p=this.level.plates.find(p=>p.id===face.id),group=new THREE.Group();
     const normal=new THREE.Vector3(...face.normal),orientation=new THREE.Quaternion().setFromEuler(new THREE.Euler(...face.rotation));
-    group.position.copy(normal).multiplyScalar(1.95);group.quaternion.copy(orientation);
-    const shape=roundedShape(3.82,3.82,.13);
-    for(const[u,v]of face.screws)circularHole(shape,u,v,.12);
-    circularHole(shape,.43,.04,.105);
-    const material=face.number%2?this.materials.silver:this.materials.dark;
+    group.position.copy(normal).multiplyScalar(face.surface).add(new THREE.Vector3(...face.center,0).applyQuaternion(orientation));group.quaternion.copy(orientation);
+    const [w,h]=face.size,shape=roundedShape(w,h,face.layer?.08:.13);
+    for(const[u,v]of face.screws)circularHole(shape,u-face.center[0],v-face.center[1],.12);
+    if(!face.layer)circularHole(shape,.43,.04,.105);
+    const material=(face.number+face.layer)%2?this.materials.silver:this.materials.dark;
     const mesh=new THREE.Mesh(extrude(shape,.10,.035),material);mesh.castShadow=mesh.receiveShadow=true;group.add(mesh);this.root.add(group);this.blockerMeshes.push(mesh);
     this.plates.set(p.id,{group,mesh,base:group.position.clone(),orientation,normal,face,falling:false,fallen:false});
-    const c=document.createElement('canvas');c.width=256;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle=face.number%2?'#65717b':'#a9b5bc';ctx.font='500 54px sans-serif';ctx.textAlign='center';ctx.fillText(String(face.number).padStart(2,'0'),128,60);
-    const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;this.textures.push(texture);
-    const label=new THREE.Mesh(new THREE.PlaneGeometry(.62,.23),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));label.position.set(.95,-1.54,.143);group.add(label);
+    if(face.layer){
+      // 折り下げた縁で下の頭を覆い、板の厚みと取り外す順番を見せる。
+      for(const [sw,sh,x,y] of [[w,.06,0,h/2-.03],[w,.06,0,-h/2+.03],[.06,h,-w/2+.03,0],[.06,h,w/2-.03,0]]){
+        const skirt=new THREE.Mesh(new THREE.BoxGeometry(sw,sh,.47),material);skirt.position.set(x,y,-.205);skirt.castShadow=skirt.receiveShadow=true;group.add(skirt);this.blockerMeshes.push(skirt);
+      }
+    }else{
+      const c=document.createElement('canvas');c.width=256;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle=face.number%2?'#65717b':'#a9b5bc';ctx.font='500 54px sans-serif';ctx.textAlign='center';ctx.fillText(String(face.number).padStart(2,'0'),128,60);
+      const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;this.textures.push(texture);
+      const label=new THREE.Mesh(new THREE.PlaneGeometry(.62,.23),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));label.position.set(.95,-1.54,.143);group.add(label);
+    }
     p.screws.forEach((s,i)=>{
-      const id=`${p.id}-${i}`,[u,v]=face.screws[i],sg=new THREE.Group();
+      const id=`${p.id}-${i}`,u=face.screws[i][0]-face.center[0],v=face.screws[i][1]-face.center[1],sg=new THREE.Group();
       const mount=mountFastener(sg,{x:u,y:v,inside:s.headSide==='inside',angle:i*.32});
       const washer=new THREE.Mesh(this.geo.washer,this.washerMaterials[s.color]);washer.castShadow=washer.receiveShadow=true;sg.add(washer);
       const head=new THREE.Mesh(this.geo.head,this.materials.head);head.position.z=.075;head.castShadow=head.receiveShadow=true;sg.add(head);
@@ -54,8 +63,16 @@ export class CubeScene extends MetalScene {
       const shaft=new THREE.Mesh(this.geo.shaft,this.materials.thread);shaft.position.z=-.15;sg.add(shaft);
       for(let n=0;n<6;n++){const thread=new THREE.Mesh(this.geo.thread,this.materials.thread);thread.position.z=-.34+n*.055;sg.add(thread);}
       group.add(sg);this.screws.set(id,{group:sg,...mount,plateId:p.id,color:s.color,pulled:false,covered:false,button:null,spinning:false});
-      this.makeReceiver(group,orientation,normal,u,v,mount.inside);
+      if(!face.layer)this.makeReceiver(group,orientation,normal,u,v,mount.inside);
     });
+  }
+  makeSpacers(face){
+    const parent=this.plates.get(face.parentId),shape=new THREE.Shape();shape.absarc(0,0,.16,0,Math.PI*2,false);circularHole(shape,0,0,.082);
+    for(const[u,v]of face.screws){
+      // 支柱は下の板に固定する。上の板を外すと支柱と下のビスが現れる。
+      const spacer=new THREE.Mesh(extrude(shape,.44,.008),this.materials.thread);
+      spacer.position.set(u-parent.face.center[0],v-parent.face.center[1],.14);spacer.castShadow=spacer.receiveShadow=true;parent.group.add(spacer);
+    }
   }
   makeReceiver(panel,orientation,normal,u,v,inside){
     // フレームの耳を板の裏に置く。内締めでは板側の外ナットへ、外締めでは耳のナットへねじ込む。
@@ -84,7 +101,8 @@ export class CubeScene extends MetalScene {
   }
   resize(){
     const r=this.stage.getBoundingClientRect();this.width=r.width;this.height=r.height;this.resizeCanvas();this.camera.aspect=r.width/r.height;
-    const vertical=Math.max(7.8,7.8/this.camera.aspect);this.cameraDistance=vertical/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2)));
+    const extent=this.level.covers?.some(p=>p.layer===2)?9.2:this.level.covers?.length?8.4:7.8;
+    const vertical=Math.max(extent,extent/this.camera.aspect);this.cameraDistance=vertical/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2)));
     this.camera.position.set(0,0,this.cameraDistance);this.camera.updateProjectionMatrix();this.camera.lookAt(0,0,0);
   }
   bindInputs(){
@@ -152,7 +170,7 @@ export class CubeScene extends MetalScene {
   frame(now){
     const dt=Math.min((now-this.lastTime)/1000,.05);this.lastTime=now;const blend=reduced?1:1-Math.exp(-13*dt);
     this.root.quaternion.slerp(this.targetQuaternion,blend);this.inspect+=(this.inspectTarget-this.inspect)*blend;this.camera.position.z=this.cameraDistance*(1+this.inspect*.30);
-    for(const p of this.plates.values())if(!p.falling&&!p.fallen)p.group.position.copy(p.base).addScaledVector(p.normal,this.inspect*1.0);
+    for(const p of this.plates.values())if(!p.falling&&!p.fallen)p.group.position.copy(p.base).addScaledVector(p.normal,this.inspect*(1+p.face.layer*.50));
     for(const s of this.screws.values())if(!s.spinning)s.group.visible=!s.pulled;
     for(let i=this.jobs.length-1;i>=0;i--){const j=this.jobs[i],t=clamp((now-j.start)/j.duration,0,1);j.update(t);if(t===1){this.jobs.splice(i,1);j.resolve();}}
     this.root.updateMatrixWorld(true);

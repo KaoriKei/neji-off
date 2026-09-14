@@ -3,6 +3,7 @@ import type { LevelDef } from '../src/game/Level';
 import { Puzzle } from './puzzle';
 import flatOverlap from '../src/data/levels/02.json';
 import cubeStudy from './cube-study.json';
+import layeredLevels from './layered-levels.json';
 
 const basics: LevelDef = {
   id:1,bufferSize:5,trays:['blue','red'],
@@ -28,13 +29,17 @@ export const STAGES: {kind:'flat'|'cube';name:string;level:LevelDef}[] = [
   {kind:'flat',name:'基本操作',level:basics},
   {kind:'flat',name:'重なりと一時置き',level:{...structuredClone(flatOverlap) as LevelDef,id:2,bufferSize:5}},
   {kind:'cube',name:'キューブを回す',level:easyCube},
-  {kind:'cube',name:'六面を分解する',level:{...structuredClone(cubeStudy.level) as LevelDef,id:4}},
+  ...layeredLevels.map(entry=>({kind:'cube' as const,name:entry.name,level:entry.level as LevelDef})),
 ];
 
 export class Campaign {
-  index=0;
-  puzzle=new Puzzle(STAGES[0].level);
+  index:number;
+  puzzle:Puzzle;
   learned=new Set<string>();
+  constructor(initialLevel=1){
+    this.index=Number.isInteger(initialLevel)&&initialLevel>=1&&initialLevel<=STAGES.length?initialLevel-1:0;
+    this.puzzle=new Puzzle(this.level);
+  }
   get stage(){return STAGES[this.index];}
   get level(){return this.stage.level;}
   get board(){return this.puzzle.board;}
@@ -53,8 +58,8 @@ export class Campaign {
   }
   startOver(){this.index=0;this.puzzle=new Puzzle(this.level);this.learned.clear();}
   lesson(): {title:string;text:string;target?:string}|null {
-    if(this.board.isCleared()||this.index===3)return null;
-    const remaining=this.board.remainingScrews(),moves=this.board.pullableScrews();
+    if(this.board.isCleared()||this.index>=3)return null;
+    const moves=this.board.pullableScrews();
     if(this.index===0){
       const blue=moves.find(id=>this.board.getScrew(id)!.color==='blue');
       if(!this.history.length)return{title:'青いビスをタップ',text:'同じ色のトレイに入ります。',target:blue};
@@ -66,9 +71,7 @@ export class Campaign {
       if(!this.learned.has('bufferSucked'))return{title:'トレイがない色は一時置きへ',text:'赤を3本そろえて、次のトレイを出そう。',target:moves.find(id=>this.board.getScrew(id)!.color==='red')};
       return{title:'トレイが来ると自動で移動',text:'残りのビスも、上から順に外そう。'};
     }
-    if(!this.learned.has('rotated'))return{title:'キューブを回す',text:'ドラッグして裏や底を見よう。トレイと一時置きは、6面で共有します。'};
-    if(['F-0','D-0'].some(id=>!this.board.getScrew(id)!.pulled))return{title:'開いた面から内側を見る',text:'頭が内側のビスは、ねじ山が外側。開いた面から頭が見えれば抜けます。'};
-    if(remaining>0)return{title:'残りの面を取り外す',text:'裏や底のビスも確認しよう。6枚のパネルを外すとクリアです。'};
+    if(!this.learned.has('rotated'))return{title:'キューブを回す',text:'ドラッグして、裏や底のビスも探そう。'};
     return null;
   }
 }
