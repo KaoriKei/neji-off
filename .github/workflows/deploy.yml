@@ -1,9 +1,10 @@
-# main に push されるたびに、テスト→レベル検証→ビルドして GitHub Pages に公開する
+# 通常版は main、キューブ版は専用ブランチから作り、同じ公開物にまとめる。
+# どちらを更新しても、通常版と /cube/ の両方を残す。
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/metal-cube]
   workflow_dispatch:
 
 permissions:
@@ -19,19 +20,50 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 通常版のソースを取得
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name == 'main' && github.sha || 'main' }}
+          path: original-game
+      - name: キューブ版のソースを取得
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name == 'feature/metal-cube' && github.sha || 'feature/metal-cube' }}
+          path: cube-game
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run verify
-      - run: npm run build
+          cache-dependency-path: |
+            original-game/package-lock.json
+            cube-game/package-lock.json
+      - name: 通常版を検証してビルド
+        working-directory: original-game
+        run: |
+          npm ci
+          npm test
+          npm run verify
+          npm run build
+      - name: キューブ版を検証してビルド
+        working-directory: cube-game
+        run: |
+          npm ci
+          npm test
+          npm run verify
+          npx tsc --noEmit
+          npm run build:3d
+      - name: 通常版とキューブ版を別パスに配置
+        run: |
+          mkdir -p _site/cube
+          cp -R original-game/dist/. _site/
+          cp -R cube-game/prototype-3d/dist/. _site/cube/
+          touch _site/.nojekyll
+          test -f _site/index.html
+          test -f _site/cube/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: _site
 
   deploy:
     needs: build
