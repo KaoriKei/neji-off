@@ -1,4 +1,5 @@
 // ゲーム本体のシーン。Board（ロジック）と Juice（演出）をつなぐ。
+// 盤面（板とネジ）は boardLayer に入れて、レベル座標 → 画面座標へ縮小して金属フレームに収める。
 import Phaser from 'phaser';
 import { LEVELS } from '../data/levels/index';
 import { Board } from '../game/Board';
@@ -17,6 +18,8 @@ export interface ScrewView {
   c: Phaser.GameObjects.Container;
   color: Color;
   where: 'board' | 'tray' | 'buffer' | 'flying';
+  /** 覆われているときに板の上に出すグレーのシルエット */
+  ghost?: Phaser.GameObjects.Graphics;
 }
 export interface TrayView {
   c: Phaser.GameObjects.Container;
@@ -24,6 +27,10 @@ export interface TrayView {
   holes: Phaser.GameObjects.Graphics[];
   screws: (ScrewView | null)[];
 }
+
+const TEXT = (size: number, color = T.NAVY_CSS): Phaser.Types.GameObjects.Text.TextStyle => ({
+  fontFamily: T.FONT, fontSize: `${size}px`, color, fontStyle: '800',
+});
 
 export class Game extends Phaser.Scene {
   /** create() ごとに増える世代番号。古い演出が新しい盤面を触らないための番兵 */
@@ -33,16 +40,22 @@ export class Game extends Phaser.Scene {
   sfx!: Sfx;
   juice!: Juice;
 
+  boardLayer!: Phaser.GameObjects.Container;
   plateViews = new Map<string, PlateView>();
   screwViews = new Map<string, ScrewView>();
   trayViews: (TrayView | null)[] = [null, null, null];
-  bufferHoles: Phaser.GameObjects.Graphics[] = [];
+  bufferTiles: Phaser.GameObjects.Graphics[] = [];
+  bufferMarks: Phaser.GameObjects.Graphics[] = [];
   bufferScrews: (ScrewView | null)[] = [null, null, null, null, null];
   bufferGlow!: Phaser.GameObjects.Graphics;
   sparks!: Phaser.GameObjects.Particles.ParticleEmitter;
   confetti!: Phaser.GameObjects.Particles.ParticleEmitter;
 
   private retryBtn!: Phaser.GameObjects.Container;
+  private progressFill!: Phaser.GameObjects.Graphics;
+  private progress = { p: 0 };
+  private bufferCount!: { ato: Phaser.GameObjects.Text; num: Phaser.GameObjects.Text; waku: Phaser.GameObjects.Text };
+  private totalScrews = 0;
   private locked = false;
   private over = false;
 
@@ -62,12 +75,15 @@ export class Game extends Phaser.Scene {
     this.plateViews = new Map();
     this.screwViews = new Map();
     this.trayViews = [null, null, null];
-    this.bufferHoles = [];
+    this.bufferTiles = [];
+    this.bufferMarks = [];
     this.bufferScrews = [null, null, null, null, null];
+    this.progress = { p: 0 };
 
     const level = LEVELS[this.levelIdx];
     for (const w of validateLevel(level)) console.warn(w);
     this.board = new Board(level);
+    this.totalScrews = this.board.allScrews().length;
     this.sfx = (this.registry.get('sfx') as Sfx | undefined) ?? new Sfx();
     this.registry.set('sfx', this.sfx);
 
@@ -76,15 +92,25 @@ export class Game extends Phaser.Scene {
     // 背景
     D.drawBackground(this.add.graphics().setDepth(T.DEPTH.bg), BASE_W, BASE_H);
 
-    // レベル番号
+    // ---- ヘッダー ----
+    D.makeLogo(this, T.HEADER.logoX, T.HEADER.logoY).setDepth(T.DEPTH.ui);
+    const rb = this.add.graphics();
+    D.drawRetryButton(rb);
+    this.retryBtn = this.add.container(T.HEADER.retryX, T.HEADER.retryY, [rb]).setDepth(T.DEPTH.ui);
     this.add
-      .text(BASE_W / 2, T.LEVEL_LABEL_Y, `レベル ${level.id}`, {
-        fontFamily: T.FONT, fontSize: '44px', color: '#3A3A3A', fontStyle: '800',
-      })
-      .setOrigin(0.5)
+      .text(T.HEADER.retryX - T.HEADER.retryR - 26, T.HEADER.levelY, `LEVEL ${String(level.id).padStart(2, '0')}`, TEXT(40))
+      .setOrigin(1, 0.5)
+      .setLetterSpacing(2)
       .setDepth(T.DEPTH.ui);
+    const track = this.add.graphics({ x: T.PROGRESS.x, y: T.PROGRESS.y }).setDepth(T.DEPTH.ui);
+    D.drawProgressTrack(track);
+    this.progressFill = this.add.graphics({ x: T.PROGRESS.x, y: T.PROGRESS.y }).setDepth(T.DEPTH.ui + 1);
+    D.drawProgressFill(this.progressFill, 0);
 
-    // トレイ（空枠の輪郭を常に敷いておく）
+    // ひとこと
+    this.add.text(BASE_W / 2, T.HINT_Y, '同じ色を3本そろえよう', TEXT(36)).setOrigin(0.5).setDepth(T.DEPTH.ui);
+
+    // ---- トレイ ----
     const snap = this.board.snapshot();
     for (let i = 0; i < 3; i++) {
       D.drawTrayGhost(this.add.graphics({ x: T.TRAY_X[i], y: T.TRAY_Y }).setDepth(T.DEPTH.ui));
@@ -92,28 +118,49 @@ export class Game extends Phaser.Scene {
       if (t) this.createTray(i, t.color);
     }
 
-    // 仮置き場
-    D.drawBufferFrame(this.add.graphics().setDepth(T.DEPTH.ui));
-    for (let i = 0; i < 5; i++) {
-      const h = this.add.graphics({ x: T.BUFFER_X[i], y: T.BUFFER_Y }).setDepth(T.DEPTH.ui + 1);
-      D.drawHole(h, T.BUFFER_HOLE_R);
-      this.bufferHoles.push(h);
-    }
-    this.bufferGlow = this.add.graphics().setDepth(T.DEPTH.ui + 2).setAlpha(0);
-    D.drawBufferGlow(this.bufferGlow);
-
-    // リトライ
-    const rb = this.add.graphics();
-    D.drawRetryButton(rb);
-    this.retryBtn = this.add.container(T.RETRY.x, T.RETRY.y, [rb]).setDepth(T.DEPTH.ui);
-
-    // 板とネジ
-    for (const p of level.plates) {
+    // ---- 盤面（金属フレーム＋板＋ネジ）----
+    D.drawFrame(this.add.graphics().setDepth(T.DEPTH.ui));
+    this.boardLayer = this.add.container(T.BOARD_OFFSET.x, T.BOARD_OFFSET.y).setScale(T.BOARD_SCALE).setDepth(T.DEPTH.board);
+    // コンテナ内は追加順＝描画順なので、z の小さい板から順に「板→そのネジ」で入れる
+    const plates = [...level.plates].sort((a, b) => a.z - b.z);
+    for (const p of plates) {
       this.createPlate(p);
       p.screws.forEach((s, i) => this.createScrew(p, i, s));
     }
+    // 覆われたネジのゴーストは全部の板より上に
+    for (const sv of this.screwViews.values()) {
+      const gh = this.add.graphics({ x: sv.c.x, y: sv.c.y });
+      D.drawGhostScrew(gh);
+      this.boardLayer.add(gh);
+      sv.ghost = gh;
+    }
+    this.refreshGhosts();
 
-    // パーティクル
+    // ---- 仮置き場 ----
+    this.add.text(T.BUFFER_ROW.x, T.BUFFER_LABEL_Y, '一時置き', TEXT(40)).setOrigin(0, 0.5).setDepth(T.DEPTH.ui);
+    const waku = this.add.text(T.BUFFER_ROW.x + T.BUFFER_ROW.w, T.BUFFER_LABEL_Y + 22, '枠', TEXT(36)).setOrigin(1, 1).setDepth(T.DEPTH.ui);
+    const num = this.add.text(0, T.BUFFER_LABEL_Y + 26, '5', TEXT(72, T.ORANGE_CSS)).setOrigin(1, 1).setDepth(T.DEPTH.ui);
+    const ato = this.add.text(0, T.BUFFER_LABEL_Y + 22, 'あと', TEXT(36)).setOrigin(1, 1).setDepth(T.DEPTH.ui);
+    this.bufferCount = { ato, num, waku };
+    for (let i = 0; i < 5; i++) {
+      const tile = this.add.graphics({ x: T.BUFFER_X[i], y: T.BUFFER_Y }).setDepth(T.DEPTH.ui);
+      D.drawTile(tile);
+      this.bufferTiles.push(tile);
+      const mark = this.add.graphics({ x: T.BUFFER_X[i], y: T.BUFFER_Y }).setDepth(T.DEPTH.ui + 1);
+      D.drawTileEmptyMark(mark);
+      this.bufferMarks.push(mark);
+    }
+    this.bufferGlow = this.add.graphics().setDepth(T.DEPTH.ui + 2).setAlpha(0);
+    D.drawBufferGlow(this.bufferGlow);
+    this.updateBufferCount();
+
+    // ---- 商品カード ----
+    this.createProductCard();
+
+    // ---- フッター ----
+    this.add.text(BASE_W / 2, T.FOOTER_Y, 'NEJI OFF', TEXT(24, T.GREY_TEXT_CSS)).setOrigin(0.5).setLetterSpacing(8).setDepth(T.DEPTH.ui);
+
+    // ---- パーティクル ----
     this.sparks = this.add
       .particles(0, 0, 'dot', {
         speed: { min: 120, max: 320 },
@@ -121,7 +168,7 @@ export class Game extends Phaser.Scene {
         lifespan: { min: 200, max: 380 },
         scale: { start: 0.7, end: 0 },
         gravityY: 1200,
-        tint: [0xa89f92, 0xd9d0c2, 0x8c8478],
+        tint: [0xa8adb3, 0xd9dde1, 0x8c9198],
         emitting: false,
       })
       .setDepth(T.DEPTH.flying + 1);
@@ -163,11 +210,11 @@ export class Game extends Phaser.Scene {
 
   createTray(i: number, color: Color): TrayView {
     const body = this.add.graphics();
-    D.drawTrayBody(body, color);
+    D.drawTrayCard(body, color);
     const holes: Phaser.GameObjects.Graphics[] = [];
     for (const dx of T.TRAY_HOLE_DX) {
       const h = this.add.graphics({ x: dx, y: 0 });
-      D.drawHole(h, T.TRAY_HOLE_R);
+      D.drawTrayHole(h, color);
       holes.push(h);
     }
     const c = this.add.container(T.TRAY_X[i], T.TRAY_Y, [body, ...holes]).setDepth(T.DEPTH.ui + 1);
@@ -181,23 +228,96 @@ export class Game extends Phaser.Scene {
     D.drawPlate(body, p.w, p.h, p.color);
     const hl = this.add.graphics().setAlpha(0);
     D.drawPlateHighlight(hl, p.w, p.h);
-    const c = this.add.container(p.x + p.w / 2, p.y + p.h / 2, [body, hl]).setDepth(T.DEPTH.plateBase + p.z * T.DEPTH.plateStep);
+    const c = this.add.container(p.x + p.w / 2, p.y + p.h / 2, [body, hl]);
+    this.boardLayer.add(c);
     this.plateViews.set(p.id, { c, hl });
   }
 
   private createScrew(p: PlateDef, i: number, s: ScrewDef): void {
     const g = this.add.graphics();
     D.drawScrew(g, s.color);
-    const c = this.add.container(s.x, s.y, [g]).setDepth(T.DEPTH.plateBase + p.z * T.DEPTH.plateStep + T.DEPTH.screwOffset);
+    const c = this.add.container(s.x, s.y, [g]);
+    this.boardLayer.add(c);
     const id = mkScrewId(p.id, i);
     this.screwViews.set(id, { id, c, color: s.color, where: 'board' });
+  }
+
+  private createProductCard(): void {
+    const { x, y, w, h } = T.PRODUCT;
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const card = this.add.graphics();
+    D.drawCard(card, w, h, 28);
+    const name = this.add.text(-w / 2 + 40, -22, 'タイヨウビス', TEXT(44)).setOrigin(0, 0.5);
+    const sub = this.add.text(-w / 2 + 40, 28, 'D6皿ドリル', TEXT(28, T.GREY_TEXT_CSS)).setOrigin(0, 0.5);
+    const line = this.add.graphics();
+    line.lineStyle(2, T.CARD_LINE, 1);
+    line.beginPath();
+    line.moveTo(-w / 2 + 330, -h / 2 + 30);
+    line.lineTo(-w / 2 + 330, h / 2 - 30);
+    line.strokePath();
+    const sg = this.add.graphics();
+    D.drawSideScrew(sg);
+    const screw = this.add.container(-w / 2 + 380, 26, [sg]).setAngle(-22).setScale(0.95);
+    const tag = this.add.text(w / 2 - 40, 0, 'つくるを支える\n小さな力', { ...TEXT(28, T.GREY_TEXT_CSS), align: 'right', lineSpacing: 6 }).setOrigin(1, 0.5);
+    this.add.container(cx, cy, [card, name, sub, line, screw, tag]).setDepth(T.DEPTH.ui);
+  }
+
+  // ---------- 盤面 ⇄ 画面 ----------
+
+  /** レベル座標 → 画面座標 */
+  toScreen(lx: number, ly: number): { x: number; y: number } {
+    return { x: this.boardLayer.x + lx * T.BOARD_SCALE, y: this.boardLayer.y + ly * T.BOARD_SCALE };
+  }
+
+  /** 盤面レイヤーからネジを取り出して、画面座標の直下オブジェクトにする（飛ばす前に呼ぶ） */
+  detachFromBoard(sv: ScrewView): void {
+    if (sv.c.parentContainer !== this.boardLayer) return;
+    const p = this.toScreen(sv.c.x, sv.c.y);
+    this.boardLayer.remove(sv.c);
+    this.add.existing(sv.c);
+    sv.c.setPosition(p.x, p.y).setScale(T.BOARD_SCALE).setDepth(T.DEPTH.flying);
+  }
+
+  /** 覆われているネジだけゴーストを出す */
+  refreshGhosts(): void {
+    for (const s of this.board.allScrews()) {
+      const sv = this.screwViews.get(s.id);
+      sv?.ghost?.setVisible(!s.pulled && this.board.isCovered(s.id));
+    }
+  }
+
+  /** 進捗バーと「あと N 枠」を今の盤面状態に合わせる */
+  refreshHud(): void {
+    this.refreshGhosts();
+    const pulled = this.totalScrews - this.board.remainingScrews();
+    const target = this.totalScrews > 0 ? pulled / this.totalScrews : 0;
+    this.tweens.add({
+      targets: this.progress,
+      p: target,
+      duration: 300,
+      ease: 'Quad.easeOut',
+      onUpdate: () => D.drawProgressFill(this.progressFill, this.progress.p),
+    });
+    this.updateBufferCount();
+  }
+
+  private updateBufferCount(): void {
+    const s = this.board.snapshot();
+    const n = s.bufferSize - s.buffer.length;
+    const { ato, num, waku } = this.bufferCount;
+    num.setText(`${n}`);
+    num.setX(waku.x - waku.width - 6);
+    ato.setX(num.x - num.width - 8);
+    num.setColor(n === 0 ? '#E0392B' : T.ORANGE_CSS);
+    this.bufferMarks.forEach((m, i) => m.setVisible(i >= s.buffer.length));
   }
 
   // ---------- 入力 ----------
 
   private onTap(x: number, y: number): void {
     this.sfx.unlock();
-    if (Phaser.Math.Distance.Between(x, y, T.RETRY.x, T.RETRY.y) <= T.RETRY.r + 12) {
+    if (Phaser.Math.Distance.Between(x, y, T.HEADER.retryX, T.HEADER.retryY) <= T.HEADER.retryR + 14) {
       this.retry();
       return;
     }
@@ -217,15 +337,17 @@ export class Game extends Phaser.Scene {
     this.time.delayedCall(400, () => {
       this.locked = false;
     });
+    this.refreshHud();
     void this.juice.play(r.events);
   }
 
-  /** タップ位置に一番近い（一番上の板の）盤面上のネジ。判定半径は見た目より一回り大きい */
+  /** タップ位置に一番近い（一番上の板の）盤面上のネジ。判定半径は見た目より一回り大きい（画面座標） */
   private hitScrew(x: number, y: number): string | null {
     let best: { id: string; z: number; d: number } | null = null;
     for (const s of this.board.allScrews()) {
       if (s.pulled) continue;
-      const d = Phaser.Math.Distance.Between(x, y, s.x, s.y);
+      const p = this.toScreen(s.x, s.y);
+      const d = Phaser.Math.Distance.Between(x, y, p.x, p.y);
       if (d > T.TAP_R) continue;
       const z = this.board.getPlate(s.plateId)!.z;
       if (!best || z > best.z || (z === best.z && d < best.d)) best = { id: s.id, z, d };
@@ -249,24 +371,16 @@ export class Game extends Phaser.Scene {
   /** ゲームオーバー：暗くして、残ネジ本数を大きく出し、リトライだけ浮かせる。責めない。 */
   onStuck(): void {
     this.over = true;
-    const dim = this.add.rectangle(BASE_W / 2, BASE_H / 2, BASE_W, BASE_H, 0x000000, 0.3).setDepth(T.DEPTH.overlay).setAlpha(0);
+    const dim = this.add.rectangle(BASE_W / 2, BASE_H / 2, BASE_W, BASE_H, 0x1d2630, 0.45).setDepth(T.DEPTH.overlay).setAlpha(0);
     this.tweens.add({ targets: dim, alpha: 1, duration: 300 });
     this.bufferGlow.setAlpha(1);
 
     const n = this.board.remainingScrews();
-    const num = this.add
-      .text(BASE_W / 2, 880, `${n}`, { fontFamily: T.FONT, fontSize: '260px', color: '#FFFFFF', fontStyle: '800' })
-      .setOrigin(0.5)
-      .setDepth(T.DEPTH.overlayUi)
-      .setAlpha(0);
-    const unit = this.add
-      .text(BASE_W / 2, 1080, 'のこり', { fontFamily: T.FONT, fontSize: '48px', color: '#FFFFFF', fontStyle: '800' })
-      .setOrigin(0.5)
-      .setDepth(T.DEPTH.overlayUi)
-      .setAlpha(0);
+    const num = this.add.text(BASE_W / 2, 880, `${n}`, TEXT(260, '#FFFFFF')).setOrigin(0.5).setDepth(T.DEPTH.overlayUi).setAlpha(0);
+    const unit = this.add.text(BASE_W / 2, 1080, 'のこり', TEXT(48, '#FFFFFF')).setOrigin(0.5).setDepth(T.DEPTH.overlayUi).setAlpha(0);
     this.tweens.add({ targets: [num, unit], alpha: 1, duration: 300, delay: 150 });
 
     this.retryBtn.setDepth(T.DEPTH.overlayUi);
-    this.tweens.add({ targets: this.retryBtn, y: T.RETRY.y - 14, scale: 1.08, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.retryBtn, y: T.HEADER.retryY - 10, scale: 1.12, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 }

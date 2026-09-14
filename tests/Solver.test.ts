@@ -6,7 +6,7 @@ const SAMPLE: LevelDef = {
   id: 1,
   plates: [
     {
-      id: 'A', x: 240, y: 700, w: 600, h: 300, z: 0, color: 'beige',
+      id: 'A', x: 240, y: 700, w: 600, h: 300, z: 0, color: 'cream',
       screws: [
         { x: 280, y: 740, color: 'red' },
         { x: 800, y: 740, color: 'red' },
@@ -14,7 +14,7 @@ const SAMPLE: LevelDef = {
       ],
     },
     {
-      id: 'B', x: 440, y: 600, w: 400, h: 300, z: 1, color: 'sand',
+      id: 'B', x: 440, y: 600, w: 400, h: 300, z: 1, color: 'mint',
       screws: [
         { x: 480, y: 640, color: 'red' },
         { x: 800, y: 640, color: 'blue' },
@@ -40,7 +40,7 @@ describe('Solver', () => {
       id: 2,
       plates: [
         {
-          id: 'A', x: 150, y: 450, w: 780, h: 250, z: 0, color: 'beige',
+          id: 'A', x: 150, y: 450, w: 780, h: 250, z: 0, color: 'cream',
           screws: [
             { x: 300, y: 575, color: 'red' },
             { x: 540, y: 575, color: 'red' },
@@ -48,7 +48,7 @@ describe('Solver', () => {
           ],
         },
         {
-          id: 'C', x: 150, y: 750, w: 780, h: 250, z: 1, color: 'sand',
+          id: 'C', x: 150, y: 750, w: 780, h: 250, z: 1, color: 'mint',
           screws: [
             { x: 300, y: 875, color: 'blue' },
             { x: 540, y: 875, color: 'blue' },
@@ -56,7 +56,7 @@ describe('Solver', () => {
           ],
         },
         {
-          id: 'D', x: 150, y: 1050, w: 780, h: 250, z: 2, color: 'greige',
+          id: 'D', x: 150, y: 1050, w: 780, h: 250, z: 2, color: 'grey',
           screws: [
             { x: 300, y: 1175, color: 'blue' },
             { x: 540, y: 1175, color: 'blue' },
@@ -64,7 +64,7 @@ describe('Solver', () => {
           ],
         },
         {
-          id: 'B', x: 100, y: 380, w: 880, h: 1100, z: 3, color: 'milktea',
+          id: 'B', x: 100, y: 380, w: 880, h: 1100, z: 3, color: 'lavender',
           screws: [
             { x: 200, y: 450, color: 'yellow' },
             { x: 540, y: 450, color: 'yellow' },
@@ -85,7 +85,7 @@ describe('Solver', () => {
       id: 3,
       plates: [
         {
-          id: 'A', x: 100, y: 400, w: 880, h: 300, z: 0, color: 'beige',
+          id: 'A', x: 100, y: 400, w: 880, h: 300, z: 0, color: 'cream',
           screws: [
             { x: 200, y: 500, color: 'red' },
             { x: 500, y: 500, color: 'red' },

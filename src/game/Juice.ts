@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import type { BoardEvent } from './Board';
 import type { Color } from './Level';
 import type { Game, ScrewView } from '../scenes/Game';
-import { BUFFER_X, BUFFER_Y, DEPTH, SCREW, TRAY_HOLE_DX, TRAY_X, TRAY_Y } from './Theme';
+import { BUFFER_X, BUFFER_Y, DEPTH, RING, SCREW_UI_SCALE, TRAY_HOLE_DX, TRAY_X, TRAY_Y } from './Theme';
 
 /** 同じ場所（トレイ枠・仮置き場）に触る演出を順番待ちさせる小さな行列 */
 class Lane {
@@ -80,7 +80,7 @@ export class Juice {
       case 'screwToTray': {
         const sv = this.g.screwViews.get(e.screwId)!;
         sv.where = 'flying';
-        sv.c.setDepth(DEPTH.flying);
+        this.g.detachFromBoard(sv);
         await this.lift(sv);
         await this.trayLane[e.trayIndex].run(async () => {
           const tv = this.g.trayViews[e.trayIndex];
@@ -95,11 +95,12 @@ export class Juice {
       case 'screwToBuffer': {
         const sv = this.g.screwViews.get(e.screwId)!;
         sv.where = 'flying';
-        sv.c.setDepth(DEPTH.flying);
+        this.g.detachFromBoard(sv);
         await this.lift(sv);
         await this.bufferLane.run(async () => {
           await this.fly(sv, BUFFER_X[e.bufferIndex], BUFFER_Y);
-          this.land(sv, this.g.bufferHoles[e.bufferIndex], DEPTH.trayScrew);
+          this.land(sv, this.g.bufferTiles[e.bufferIndex], DEPTH.trayScrew);
+          this.g.refreshHud();
           this.g.bufferScrews[e.bufferIndex] = sv;
           sv.where = 'buffer';
         });
@@ -182,17 +183,16 @@ export class Juice {
   }
 
   private shake(sv: ScrewView): void {
-    const x0 = sv.c.x;
-    void this.tween({ targets: sv.c, x: x0 + 3, duration: 33, yoyo: true, repeat: 2, ease: 'Sine.easeInOut' }).then(() => {
-      if (this.alive()) sv.c.x = x0;
-    });
+    const targets: Phaser.GameObjects.GameObject[] = [sv.c];
+    if (sv.ghost?.visible) targets.push(sv.ghost);
+    void this.tween({ targets, x: '+=3', duration: 33, yoyo: true, repeat: 2, ease: 'Sine.easeInOut' });
   }
 
   // ---------- 個別の演出 ----------
 
   /** 360°回りながら 1.2 倍に浮く（0.15秒） */
   private lift(sv: ScrewView): Promise<void> {
-    return this.tween({ targets: sv.c, scale: 1.2, angle: '+=360', duration: 150, ease: 'Quad.easeOut' });
+    return this.tween({ targets: sv.c, scale: '*=1.2', angle: '+=360', duration: 150, ease: 'Quad.easeOut' });
   }
 
   /** 放物線で目的地へ（0.25秒） */
@@ -219,7 +219,7 @@ export class Juice {
 
   /** 穴に「カチッ」：スケール戻し、穴が一瞬へこむ、金属粉 */
   private land(sv: ScrewView, hole: Phaser.GameObjects.Graphics, depth: number): void {
-    sv.c.setScale(1).setAngle(0).setDepth(depth);
+    sv.c.setScale(SCREW_UI_SCALE).setAngle(0).setDepth(depth);
     this.g.sfx.click();
     void this.tween({ targets: hole, scale: 0.86, duration: 60, yoyo: true, ease: 'Quad.easeOut' });
     this.g.sparks.explode(Phaser.Math.Between(6, 10), sv.c.x, sv.c.y - 6);
@@ -233,7 +233,7 @@ export class Juice {
     await this.tween({ targets: pv.c, angle: 5 * dir, duration: 100, ease: 'Quad.easeOut' });
     this.g.sfx.clunk();
     this.g.cameras.main.shake(120, new Phaser.Math.Vector2(0, 0.0011));
-    await this.tween({ targets: pv.c, y: pv.c.y + 1900, angle: 9 * dir, duration: 400, ease: 'Quad.easeIn' });
+    await this.tween({ targets: pv.c, y: pv.c.y + 2200, angle: 9 * dir, duration: 400, ease: 'Quad.easeIn' });
     if (this.alive()) pv.c.destroy();
     this.g.plateViews.delete(plateId);
   }
@@ -288,6 +288,7 @@ export class Juice {
     this.land(sv, tv.holes[e.slot], DEPTH.trayScrew);
     tv.screws[e.slot] = sv;
     sv.where = 'tray';
+    this.g.refreshHud();
   }
 
   /** 残ったネジを左詰め（0.15秒） */
@@ -301,11 +302,12 @@ export class Juice {
       ps.push(this.tween({ targets: sv.c, x: BUFFER_X[m.to], duration: 150, ease: 'Quad.easeInOut' }));
     }
     await Promise.all(ps);
+    this.g.refreshHud();
   }
 
   /** クリア：紙吹雪 */
   private confetti(): void {
-    const colors = Object.values(SCREW);
+    const colors = Object.values(RING);
     for (let i = 0; i < colors.length; i++) {
       this.g.confetti.setParticleTint(colors[i]);
       this.g.confetti.explode(22, 540 + Phaser.Math.Between(-300, 300), 500);

@@ -7,7 +7,7 @@ const SAMPLE: LevelDef = {
   id: 1,
   plates: [
     {
-      id: 'A', x: 240, y: 700, w: 600, h: 300, z: 0, color: 'beige',
+      id: 'A', x: 240, y: 700, w: 600, h: 300, z: 0, color: 'cream',
       screws: [
         { x: 280, y: 740, color: 'red' },
         { x: 800, y: 740, color: 'red' },
@@ -15,7 +15,7 @@ const SAMPLE: LevelDef = {
       ],
     },
     {
-      id: 'B', x: 440, y: 600, w: 400, h: 300, z: 1, color: 'sand',
+      id: 'B', x: 440, y: 600, w: 400, h: 300, z: 1, color: 'mint',
       screws: [
         { x: 480, y: 640, color: 'red' },
         { x: 800, y: 640, color: 'blue' },
@@ -99,7 +99,7 @@ const BUFFER_LV: LevelDef = {
   id: 99,
   plates: [
     {
-      id: 'A', x: 100, y: 400, w: 880, h: 400, z: 0, color: 'beige',
+      id: 'A', x: 100, y: 400, w: 880, h: 400, z: 0, color: 'cream',
       screws: [
         { x: 200, y: 500, color: 'blue' },
         { x: 400, y: 500, color: 'blue' },
@@ -108,7 +108,7 @@ const BUFFER_LV: LevelDef = {
       ],
     },
     {
-      id: 'B', x: 100, y: 900, w: 880, h: 400, z: 1, color: 'sand',
+      id: 'B', x: 100, y: 900, w: 880, h: 400, z: 1, color: 'mint',
       screws: [
         { x: 200, y: 1000, color: 'red' },
         { x: 400, y: 1000, color: 'red' },
@@ -143,7 +143,7 @@ describe('仮置き場と吸い込み', () => {
       ...lv,
       plates: [
         {
-          id: 'A', x: 100, y: 400, w: 880, h: 400, z: 0, color: 'beige',
+          id: 'A', x: 100, y: 400, w: 880, h: 400, z: 0, color: 'cream',
           screws: [
             { x: 200, y: 500, color: 'blue' },
             { x: 400, y: 500, color: 'red' },
@@ -152,7 +152,7 @@ describe('仮置き場と吸い込み', () => {
           ],
         },
         {
-          id: 'B', x: 100, y: 900, w: 880, h: 400, z: 1, color: 'sand',
+          id: 'B', x: 100, y: 900, w: 880, h: 400, z: 1, color: 'mint',
           screws: [
             { x: 200, y: 1000, color: 'red' },
             { x: 400, y: 1000, color: 'red' },
@@ -187,7 +187,7 @@ describe('仮置き場と吸い込み', () => {
       id: 98,
       plates: [
         {
-          id: 'A', x: 100, y: 400, w: 880, h: 400, z: 0, color: 'beige',
+          id: 'A', x: 100, y: 400, w: 880, h: 400, z: 0, color: 'cream',
           screws: [
             { x: 200, y: 500, color: 'yellow' },
             { x: 400, y: 500, color: 'blue' },
@@ -196,7 +196,7 @@ describe('仮置き場と吸い込み', () => {
           ],
         },
         {
-          id: 'B', x: 100, y: 900, w: 880, h: 400, z: 1, color: 'sand',
+          id: 'B', x: 100, y: 900, w: 880, h: 400, z: 1, color: 'mint',
           screws: [
             { x: 200, y: 1000, color: 'red' },
             { x: 400, y: 1000, color: 'blue' },
@@ -205,7 +205,7 @@ describe('仮置き場と吸い込み', () => {
           ],
         },
         {
-          id: 'C', x: 100, y: 1350, w: 880, h: 100, z: 2, color: 'greige',
+          id: 'C', x: 100, y: 1350, w: 880, h: 100, z: 2, color: 'grey',
           screws: [{ x: 200, y: 1400, color: 'yellow' }],
         },
       ],

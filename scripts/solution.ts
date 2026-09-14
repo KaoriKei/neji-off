@@ -3,6 +3,7 @@
 import { LEVELS } from '../src/data/levels/index';
 import { Board } from '../src/game/Board';
 import { solve } from '../src/game/Solver';
+import { BOARD_OFFSET, BOARD_SCALE, HEADER } from '../src/game/Theme';
 
 const n = Number(process.argv[2] ?? '1');
 const lv = LEVELS.find((l) => l.id === n);
@@ -11,9 +12,10 @@ if (!lv) {
   process.exit(1);
 }
 const b = new Board(lv);
+// x,y はレベル座標、sx,sy は画面座標（自動プレイ用）
 const pos = (id: string) => {
   const s = b.getScrew(id)!;
-  return { id, x: s.x, y: s.y, color: s.color };
+  return { id, x: s.x, y: s.y, color: s.color, sx: BOARD_OFFSET.x + s.x * BOARD_SCALE, sy: BOARD_OFFSET.y + s.y * BOARD_SCALE };
 };
 const sol = solve(lv);
 const covered = b.allScrews().find((s) => b.isCovered(s.id));
@@ -53,6 +55,7 @@ const stuck = findStuck();
 console.log(
   JSON.stringify({
     level: n,
+    retry: { x: HEADER.retryX, y: HEADER.retryY },
     moves: sol.moves.map(pos),
     covered: covered ? pos(covered.id) : null,
     stuck: stuck ? stuck.map(pos) : null,

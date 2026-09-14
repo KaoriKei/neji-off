@@ -45,6 +45,7 @@ try {
   };
   const tap = async (x, y) => {
     const sx = x * SCALE, sy = y * SCALE;
+    // solution.ts の sx/sy（画面座標）を優先
     await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: sx, y: sy });
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: sx, y: sy, button: 'left', clickCount: 1 });
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: sx, y: sy, button: 'left', clickCount: 1 });
@@ -58,14 +59,14 @@ try {
 
   if (mode === 'solve') {
     if (sol.covered) {
-      await tap(sol.covered.x, sol.covered.y);
+      await tap(sol.covered.sx ?? sol.covered.x, sol.covered.sy ?? sol.covered.y);
       await sleep(110);
       await shot('01-covered-tap');
       await sleep(500);
     }
     const moves = sol.moves;
     for (let i = 0; i < moves.length; i++) {
-      await tap(moves[i].x, moves[i].y);
+      await tap(moves[i].sx ?? moves[i].x, moves[i].sy ?? moves[i].y);
       if (i === 0) { await sleep(230); await shot('02-flying'); }
       if (i === 2) { await sleep(120); await shot('03-mid'); }
       await sleep(650);
@@ -76,16 +77,16 @@ try {
   } else {
     const moves = sol.stuck ?? [];
     for (let i = 0; i < moves.length; i++) {
-      await tap(moves[i].x, moves[i].y);
+      await tap(moves[i].sx ?? moves[i].x, moves[i].sy ?? moves[i].y);
       await sleep(650);
     }
     await sleep(600);
     await shot('05-stuck');
     // 満杯タップの反応
     const any = sol.moves.find((m) => !moves.some((s) => s.id === m.id));
-    if (any) { await tap(any.x, any.y); await sleep(100); await shot('06-full-tap'); }
+    if (any) { await tap(any.sx ?? any.x, any.sy ?? any.y); await sleep(100); await shot('06-full-tap'); }
     // リトライ
-    await tap(540, 1790);
+    await tap(sol.retry?.x ?? 966, sol.retry?.y ?? 96);
     await sleep(700);
     await shot('07-after-retry');
   }

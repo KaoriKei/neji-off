@@ -1,57 +1,88 @@
-// 配色・レイアウト定数（仕様 5.2 / 5.3）
+// 配色・レイアウト定数（v0.4 UI：紺×オレンジ、白カード、金属フレーム）
 import type { Color, PlateColor } from './Level';
 
 export const FONT = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", sans-serif';
 
-export const BG = 0xf5efe3;
-export const INK = 0x3a3a3a;
-
-// ネジ（板より一段濃い）
-export const SCREW: Record<Color, number> = { red: 0xd94e3d, blue: 0x3e7fd1, yellow: 0xe0ad2a, green: 0x5fa864 };
-export const SCREW_DARK: Record<Color, number> = { red: 0xb03a2b, blue: 0x2f65a8, yellow: 0xb98a1c, green: 0x47864d };
-
-// 板（ニュートラル4色、意味なし）
-export const PLATE: Record<PlateColor, number> = { beige: 0xe9dcc3, sand: 0xdcc9a6, greige: 0xcfc8bc, milktea: 0xd7b896 };
-export const PLATE_DARK: Record<PlateColor, number> = { beige: 0xc7b795, sand: 0xbca57a, greige: 0xaba397, milktea: 0xb5946b };
-/** 板の透け具合。覆われたネジが板越しにうっすら見えるように（順番を考えられるようにするため） */
-export const PLATE_ALPHA = 0.8;
-
-export const TRAY_FILL = 0xffffff;
-export const TRAY_BAND = 0xe6dfd3;
-export const HOLE = 0xd8d0c4;
-export const HOLE_DARK = 0xbfb6a8;
-export const BUFFER_FILL = 0xf0eae0;
+// 基本色
+export const BG = 0xf6f1e8; // クリーム
+export const NAVY = 0x2e3a48; // 文字・ロゴ
+export const NAVY_CSS = '#2E3A48';
+export const ORANGE = 0xf08a24; // アクセント
+export const ORANGE_DARK = 0xd3731a;
+export const ORANGE_CSS = '#F08A24';
+export const GREY_TEXT = 0x7a8088;
+export const GREY_TEXT_CSS = '#7A8088';
+export const CARD = 0xffffff;
+export const CARD_BAND = 0xe9e3d9;
+export const CARD_LINE = 0xe2dbd0;
+export const TRACK = 0xe8e1d6;
 export const ALERT_RED = 0xe0392b;
-export const BUTTON_BLUE = 0x3e7fd1;
-export const BUTTON_BLUE_DARK = 0x2f65a8;
 
-// レイアウト（基準 1080 × 1920）
-export const SCREW_R = 32;
-export const TAP_R = 60;
-export const LEVEL_LABEL_Y = 80;
+// 金属フレーム
+export const STEEL_OUTER = 0x8b9198;
+export const STEEL_INNER = 0xb3b8bd;
+export const RAIL_LIGHT = 0xc9cdd1;
+export const RAIL_DARK = 0xa4aaaf;
+export const RIVET = 0x6e747b;
 
-export const TRAY_Y = 240;
+// ネジ：色つきワッシャー（リング）＋銀の頭
+export const RING: Record<Color, number> = { red: 0xe5533f, blue: 0x3f86d9, yellow: 0xf0b429, green: 0x5cb36a };
+export const RING_DARK: Record<Color, number> = { red: 0xb83d2d, blue: 0x2c65aa, yellow: 0xc38c14, green: 0x41894e };
+export const HEAD = 0xd3d7dc;
+export const HEAD_DARK = 0x8f959c;
+export const SLOT = 0x4e545b;
+
+// 板（パステル、意味なし）
+export const PLATE: Record<PlateColor, number> = { cream: 0xf2e9d8, mint: 0xd7e5cf, grey: 0xd8dadd, lavender: 0xded8e8 };
+export const PLATE_DARK: Record<PlateColor, number> = { cream: 0xcfc3ab, mint: 0xb1c4a6, grey: 0xb2b5ba, lavender: 0xb9b1c8 };
+/** 板の透け具合（覆われたネジはゴースト描画で見せるので、板はほぼ不透明） */
+export const PLATE_ALPHA = 0.94;
+
+// ---- レイアウト（基準 1080 × 1920）----
+export const HEADER = { logoX: 60, logoY: 40, levelY: 96, retryX: 966, retryY: 96, retryR: 50 };
+export const PROGRESS = { x: 60, y: 172, w: 960, h: 16 };
+export const HINT_Y = 232;
+
+export const TRAY_Y = 308;
 export const TRAY_X = [200, 540, 880];
 export const TRAY_W = 300;
-export const TRAY_H = 120;
-export const TRAY_HOLE_DX = [-90, 0, 90];
-export const TRAY_HOLE_R = 38;
+export const TRAY_H = 104;
+export const TRAY_HOLE_DX = [-92, 0, 92];
+export const TRAY_HOLE_R = 34;
 
-export const BUFFER_Y = 1600;
-export const BUFFER_X = [240, 390, 540, 690, 840];
-export const BUFFER_HOLE_R = 40;
-export const BUFFER_FRAME = { x: 150, y: 1540, w: 780, h: 120 };
+/** 金属フレーム（外形） */
+export const FRAME = { x: 40, y: 374, w: 1000, h: 1070, r: 36, border: 30 };
+/** フレームの内側（盤面を収める領域） */
+export const INNER = { x: FRAME.x + FRAME.border, y: FRAME.y + FRAME.border, w: FRAME.w - FRAME.border * 2, h: FRAME.h - FRAME.border * 2 };
+/** レベルデータの座標系（仕様 5.3 の盤面領域） */
+export const LEVEL_REGION = { x: 0, y: 340, w: 1080, h: 1160 };
+/** レベル座標 → 画面座標の倍率とオフセット */
+export const BOARD_SCALE = INNER.w / LEVEL_REGION.w;
+export const BOARD_OFFSET = { x: INNER.x - LEVEL_REGION.x * BOARD_SCALE, y: INNER.y - LEVEL_REGION.y * BOARD_SCALE };
 
-export const RETRY = { x: 540, y: 1790, r: 64 };
+export const BUFFER_LABEL_Y = 1494;
+export const BUFFER_Y = 1592;
+export const BUFFER_X = [190, 365, 540, 715, 890];
+export const BUFFER_TILE = 132;
+export const BUFFER_ROW = { x: 110, y: 1516, w: 860, h: 152 };
+
+export const PRODUCT = { x: 60, y: 1692, w: 960, h: 160 };
+export const FOOTER_Y = 1888;
+
+// ネジの寸法（レベル座標）
+export const SCREW_R = 42; // ワッシャー半径
+export const SCREW_HEAD_R = 30; // 頭の半径
+/** タップ判定半径（画面座標） */
+export const TAP_R = 60;
+/** トレイ・仮置き場に入ったネジの表示倍率 */
+export const SCREW_UI_SCALE = 0.8;
 
 // 描画順
 export const DEPTH = {
   bg: 0,
   ui: 10,
   trayScrew: 30,
-  plateBase: 100,
-  plateStep: 10,
-  screwOffset: 5,
+  board: 50,
   flying: 500,
   overlay: 900,
   overlayUi: 950,

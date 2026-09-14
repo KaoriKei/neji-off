@@ -8,7 +8,7 @@
       "w": 840,
       "h": 440,
       "z": 0,
-      "color": "milktea",
+      "color": "lavender",
       "screws": [
         { "x": 340, "y": 1100, "color": "green" },
         { "x": 880, "y": 1100, "color": "red" },
@@ -22,7 +22,7 @@
       "w": 560,
       "h": 400,
       "z": 1,
-      "color": "beige",
+      "color": "cream",
       "screws": [
         { "x": 340, "y": 920, "color": "green" },
         { "x": 740, "y": 920, "color": "blue" },
@@ -36,7 +36,7 @@
       "w": 520,
       "h": 420,
       "z": 2,
-      "color": "sand",
+      "color": "mint",
       "screws": [
         { "x": 220, "y": 700, "color": "blue" },
         { "x": 560, "y": 700, "color": "green" },
@@ -50,7 +50,7 @@
       "w": 440,
       "h": 400,
       "z": 3,
-      "color": "greige",
+      "color": "grey",
       "screws": [
         { "x": 560, "y": 540, "color": "green" },
         { "x": 840, "y": 540, "color": "yellow" },
@@ -64,7 +64,7 @@
       "w": 560,
       "h": 460,
       "z": 4,
-      "color": "milktea",
+      "color": "lavender",
       "screws": [
         { "x": 240, "y": 480, "color": "yellow" },
         { "x": 540, "y": 480, "color": "red" },

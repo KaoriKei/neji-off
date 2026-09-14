@@ -26,18 +26,24 @@ export class Title extends Phaser.Scene {
     colors.forEach((c, i) => {
       const g = this.add.graphics();
       D.drawScrew(g, c);
-      const cont = this.add.container(300 + i * 160, 620, [g]).setScale(1.6);
-      this.tweens.add({ targets: cont, y: 600, duration: 900 + i * 120, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      const cont = this.add.container(315 + i * 150, 600, [g]).setScale(1.25);
+      this.tweens.add({ targets: cont, y: 582, duration: 900 + i * 120, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
 
-    this.add
-      .text(BASE_W / 2, 820, 'NEJI OFF', { fontFamily: T.FONT, fontSize: '140px', color: '#3A3A3A', fontStyle: '800' })
-      .setOrigin(0.5);
+    // ロゴ（中央）
+    const logo = D.makeLogo(this, 0, 0, 150);
+    const b = logo.getBounds();
+    logo.setPosition(BASE_W / 2 - b.width / 2, 760);
 
     const sub = this.add
-      .text(BASE_W / 2, 1060, 'タップでスタート', { fontFamily: T.FONT, fontSize: '48px', color: '#3A3A3A', fontStyle: '800' })
+      .text(BASE_W / 2, 1120, 'タップでスタート', { fontFamily: T.FONT, fontSize: '46px', color: T.NAVY_CSS, fontStyle: '800' })
       .setOrigin(0.5);
     this.tweens.add({ targets: sub, alpha: 0.35, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+    this.add
+      .text(BASE_W / 2, T.FOOTER_Y, 'NEJI OFF', { fontFamily: T.FONT, fontSize: '24px', color: T.GREY_TEXT_CSS, fontStyle: '800' })
+      .setOrigin(0.5)
+      .setLetterSpacing(8);
 
     this.input.once('pointerdown', () => {
       const sfx = (this.registry.get('sfx') as Sfx | undefined) ?? new Sfx();

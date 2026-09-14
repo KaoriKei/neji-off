@@ -3,8 +3,8 @@
 export type Color = 'red' | 'blue' | 'yellow' | 'green';
 export const COLORS: Color[] = ['red', 'blue', 'yellow', 'green'];
 
-export type PlateColor = 'beige' | 'sand' | 'greige' | 'milktea';
-export const PLATE_COLORS: PlateColor[] = ['beige', 'sand', 'greige', 'milktea'];
+export type PlateColor = 'cream' | 'mint' | 'grey' | 'lavender';
+export const PLATE_COLORS: PlateColor[] = ['cream', 'mint', 'grey', 'lavender'];
 
 export interface ScrewDef {
   x: number;
