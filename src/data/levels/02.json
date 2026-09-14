@@ -39,7 +39,7 @@
       "z": 2,
       "color": "grey",
       "screws": [
-        { "x": 580, "y": 600, "color": "red" },
+        { "x": 600, "y": 640, "color": "red" },
         { "x": 860, "y": 600, "color": "blue" },
         { "x": 860, "y": 840, "color": "green" }
       ]
@@ -54,7 +54,7 @@
       "color": "lavender",
       "screws": [
         { "x": 280, "y": 560, "color": "green" },
-        { "x": 560, "y": 560, "color": "red" }
+        { "x": 500, "y": 560, "color": "red" }
       ]
     }
   ],

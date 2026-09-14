@@ -15,17 +15,13 @@ export function drawBackground(g: G, w: number, h: number): void {
   g.fillRect(0, 0, w, h);
 }
 
-/** ロゴ「NEJI OFF / by NEJICO」。左上 (x,y) 基準のコンテナを返す */
+/** ロゴ「NEJI OFF」。左上 (x,y) 基準のコンテナを返す（「by NEJICO」は社内公開向けに外した） */
 export function makeLogo(scene: Phaser.Scene, x: number, y: number, size = 84): Phaser.GameObjects.Container {
   const neji = scene.add.text(0, 0, 'NEJI', { fontFamily: T.FONT, fontSize: `${size}px`, color: T.NAVY_CSS, fontStyle: '800' }).setOrigin(0, 0);
   const off = scene.add
     .text(neji.width + size * 0.16, 0, 'OFF', { fontFamily: T.FONT, fontSize: `${size}px`, color: T.ORANGE_CSS, fontStyle: '800' })
     .setOrigin(0, 0);
-  const by = scene.add
-    .text(size * 0.06, size * 1.06, 'by NEJICO', { fontFamily: T.FONT, fontSize: `${Math.round(size * 0.3)}px`, color: T.NAVY_CSS, fontStyle: '800' })
-    .setOrigin(0, 0)
-    .setLetterSpacing(2);
-  return scene.add.container(x, y, [neji, off, by]);
+  return scene.add.container(x, y, [neji, off]);
 }
 
 /** 進捗バーの下地 */
