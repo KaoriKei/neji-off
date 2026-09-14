@@ -20,8 +20,11 @@ export class FlatScene extends MetalScene {
   }
   resize(){
     const r=this.stage.getBoundingClientRect();this.width=r.width;this.height=r.height;this.resizeCanvas();this.camera.aspect=r.width/r.height;
-    const vertical=Math.max(this.boardHeight+1.1,(this.boardWidth+1.1)/this.camera.aspect);
+    // 説明は盤面の手前に浮かせ、ビスの頭には重ねない。
+    const topSpace=104,contentHeight=Math.max(140,r.height-topSpace);
+    const vertical=Math.max(this.boardHeight+1.1,(this.boardWidth+1.1)/(r.width/contentHeight))*r.height/contentHeight;
     this.cameraDistance=vertical/(2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov/2)));
-    this.camera.position.set(0,0,this.cameraDistance);this.camera.updateProjectionMatrix();this.camera.lookAt(0,0,0);
+    const offsetY=vertical*topSpace/(2*r.height);
+    this.camera.position.set(0,offsetY,this.cameraDistance);this.camera.updateProjectionMatrix();this.camera.lookAt(0,offsetY,0);
   }
 }

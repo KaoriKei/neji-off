@@ -15,10 +15,12 @@ const easyCube=structuredClone(cubeStudy.level) as LevelDef;
 easyCube.id=3;
 easyCube.trays=['blue','red','green','blue','red','green'];
 for(const [i,plate] of easyCube.plates.entries()){
-  for(const screw of plate.screws){
+  for(const [j,screw] of plate.screws.entries()){
     screw.color=easyCube.trays[i];
-    // 初めてのキューブでは留め具を2か所に絞る。
-    screw.blockedBy=(plate.id==='F'||plate.id==='D')?(screw.blockedBy??[]).filter(id=>id==='T'||id==='R'):[];
+    // 初めてのキューブでは内締めを2か所に絞る。
+    const inside=(plate.id==='F'||plate.id==='D')&&j===0;
+    screw.headSide=inside?'inside':'outside';
+    if(!inside)delete screw.accessThrough;
   }
 }
 
@@ -55,17 +57,17 @@ export class Campaign {
     const remaining=this.board.remainingScrews(),moves=this.board.pullableScrews();
     if(this.index===0){
       const blue=moves.find(id=>this.board.getScrew(id)!.color==='blue');
-      if(!this.history.length)return{title:'ビスを外す',text:'青いビスをタップ。同じ色のトレイに入ります。',target:blue};
-      if(!this.learned.has('plateDropped'))return{title:'同じ色を3本',text:'3本そろうとトレイが完了。固定したビスを全部抜くと、パーツが外れます。',target:blue??moves[0]};
-      return{title:'残りのパーツも取り外す',text:'赤いビスも同じように。すべて外すと次のレベルへ進めます。',target:moves[0]};
+      if(!this.history.length)return{title:'青いビスをタップ',text:'同じ色のトレイに入ります。',target:blue};
+      if(!this.learned.has('plateDropped'))return{title:'同じ色を3本そろえよう',text:'ビスを全部抜くと、パーツが外れます。',target:blue??moves[0]};
+      return{title:`${blue?'青':'赤'}いビスも外そう`,text:'残りのパーツを外せばクリア。',target:blue??moves[0]};
     }
     if(this.index===1){
-      if(!this.learned.has('screwToBuffer'))return{title:'重なったパーツを外す',text:'下のビスは上のパーツを外すまで抜けません。まず緑のビスを試そう。',target:moves.includes('D-0')?'D-0':moves.find(id=>this.board.getScrew(id)!.color==='green')};
-      if(!this.learned.has('bufferSucked'))return{title:'一時置きは5枠',text:'トレイがない色はここで待機。赤を3本そろえると、次のトレイが来ます。',target:moves.find(id=>this.board.getScrew(id)!.color==='red')};
-      return{title:'トレイが来ると自動回収',text:'待機中のビスは同じ色のトレイへ移ります。重なりを見ながら残りを外そう。'};
+      if(!this.learned.has('screwToBuffer'))return{title:'まず緑のビスを外そう',text:'重なったパーツは、上から順に。',target:moves.includes('D-0')?'D-0':moves.find(id=>this.board.getScrew(id)!.color==='green')};
+      if(!this.learned.has('bufferSucked'))return{title:'トレイがない色は一時置きへ',text:'赤を3本そろえて、次のトレイを出そう。',target:moves.find(id=>this.board.getScrew(id)!.color==='red')};
+      return{title:'トレイが来ると自動で移動',text:'残りのビスも、上から順に外そう。'};
     }
     if(!this.learned.has('rotated'))return{title:'キューブを回す',text:'ドラッグして裏や底を見よう。トレイと一時置きは、6面で共有します。'};
-    if(['F-0','D-0'].some(id=>!this.board.getScrew(id)!.pulled))return{title:'開いた面から内側を見る',text:'頭が内側のビスは、ねじ山が外側。隣のパネルを外して内側から抜こう。'};
+    if(['F-0','D-0'].some(id=>!this.board.getScrew(id)!.pulled))return{title:'開いた面から内側を見る',text:'頭が内側のビスは、ねじ山が外側。開いた面から頭が見えれば抜けます。'};
     if(remaining>0)return{title:'残りの面を取り外す',text:'裏や底のビスも確認しよう。6枚のパネルを外すとクリアです。'};
     return null;
   }

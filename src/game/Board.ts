@@ -67,6 +67,8 @@ export class Board {
   private readonly plateList: PlateState[] = [];
   /** ネジID → そのネジを（幾何的に）覆う板ID。z の大きい順。 */
   private readonly coverMap: Map<string, string[]>;
+  /** 内側へ入れる開口部の候補。どれか1枚が外れればよい。 */
+  private readonly accessMap = new Map<string, string[]>();
 
   private trays: (TraySlot | null)[] = [];
   private readonly queue: Color[];
@@ -89,6 +91,7 @@ export class Board {
         this.screws.set(id, screw);
         this.screwList.push(screw);
         if (s.blockedBy !== undefined) explicitCover.set(id, [...s.blockedBy]);
+        if (s.accessThrough !== undefined) this.accessMap.set(id, [...s.accessThrough]);
         plate.screwIds.push(id);
       });
       this.plates.set(p.id, plate);
@@ -153,9 +156,12 @@ export class Board {
     };
   }
 
-  /** ネジを今覆っている板ID（z の大きい順）。空なら覆われていない。 */
+  /** 覆いの板、またはまだ開いていない開口部の候補。空なら盤面上はアクセスできる。 */
   coveringPlates(id: string): string[] {
-    return (this.coverMap.get(id) ?? []).filter((pid) => !this.plates.get(pid)!.dropped);
+    const covered = (this.coverMap.get(id) ?? []).filter((pid) => !this.plates.get(pid)!.dropped);
+    const openings = this.accessMap.get(id);
+    if (openings?.length && !openings.some(pid => this.plates.get(pid)!.dropped)) covered.push(...openings);
+    return [...new Set(covered)];
   }
 
   isCovered(id: string): boolean {
@@ -293,6 +299,7 @@ export class Board {
       plates: new Map<string, PlateState>(),
       plateList: [] as PlateState[],
       coverMap: this.coverMap, // 幾何は不変なので共有
+      accessMap: this.accessMap,
       trays: this.trays.map((t) => (t ? { ...t } : null)),
       queue: this.queue,
       queueIdx: this.queueIdx,

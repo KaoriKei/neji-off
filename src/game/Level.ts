@@ -12,6 +12,10 @@ export interface ScrewDef {
   color: Color;
   /** 立体の別面など、座標の重なりで表せない覆い。空配列は覆いなし。 */
   blockedBy?: string[];
+  /** ビスの頭が向く側。立体の描画に使い、覆いの条件とは分ける。 */
+  headSide?: 'inside' | 'outside';
+  /** この中のどれか1枚が外れると、内側へアクセスできる。 */
+  accessThrough?: string[];
 }
 
 export interface PlateDef {
@@ -94,6 +98,10 @@ export function validateLevel(level: LevelDef): string[] {
     p.screws.forEach((s, i) => {
       for (const id of s.blockedBy ?? []) {
         if (!ids.has(id) || id === p.id) warns.push(`${tag} ネジ ${screwId(p.id, i)}: 覆いの板ID ${id} が不正`);
+      }
+      if (s.accessThrough?.length === 0) warns.push(`${tag} ビス ${screwId(p.id, i)}: 開口部の候補が空です`);
+      for (const id of s.accessThrough ?? []) {
+        if (!ids.has(id) || id === p.id) warns.push(`${tag} ビス ${screwId(p.id, i)}: 開口部の板ID ${id} が不正`);
       }
     });
   }

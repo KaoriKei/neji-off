@@ -45,7 +45,7 @@ function paintProgress(){
   stage.setAttribute('aria-busy',String(busy));
 }
 function paintTutorial(){
-  const lesson=puzzle.lesson();$('#tutorial').hidden=!lesson;
+  const lesson=puzzle.lesson();$('#tutorial').hidden=inspecting||!lesson;
   if(lesson){$('#lesson-title').textContent=lesson.title;$('#lesson-text').textContent=lesson.text;}
   for(const button of document.querySelectorAll('.screw-button'))button.classList.toggle('lesson-target',button.dataset.screw===lesson?.target);
 }
@@ -138,13 +138,15 @@ $('#restart').addEventListener('click',reset);$('#again').addEventListener('clic
 $('#next').addEventListener('click',()=>{if(busy||pendingDrops.size||!puzzle.advance())return;closeResult();initLevel();});
 function rotated(){if(puzzle.stage.kind==='cube'&&!puzzle.learned.has('rotated')){puzzle.learned.add('rotated');paintTutorial();}}
 $('#turn-left').addEventListener('click',()=>{view?.turn(-.30);rotated();});$('#turn-right').addEventListener('click',()=>{view?.turn(.30);rotated();});$('#view-reset').addEventListener('click',()=>view?.resetView());
-$('#structure').addEventListener('click',()=>{if(busy||pendingDrops.size)return;inspecting=!inspecting;view.setInspect(inspecting);$('.game').classList.toggle('inspect',inspecting);$('#structure').setAttribute('aria-pressed',String(inspecting));$('#structure').textContent=inspecting?'重なりを閉じる':'重なりを見る';say(inspecting?(puzzle.stage.kind==='cube'?'内締めのビスは頭が内側、ねじ山が外側。閉じると操作できます。':'パーツの間を広げて確認中。閉じるとビスを抜けます。'):'ビスをタップ。同じ色を3本そろえよう。');paintProgress();});
+$('#structure').addEventListener('click',()=>{if(busy||pendingDrops.size)return;inspecting=!inspecting;view.setInspect(inspecting);$('.game').classList.toggle('inspect',inspecting);$('#structure').setAttribute('aria-pressed',String(inspecting));$('#structure').textContent=inspecting?'重なりを閉じる':'重なりを見る';say(inspecting?(puzzle.stage.kind==='cube'?'内締めのビスは頭が内側、ねじ山が外側。閉じると操作できます。':'パーツの間を広げて確認中。閉じるとビスを抜けます。'):'ビスをタップ。同じ色を3本そろえよう。');paintProgress();paintTutorial();});
 $('#sound').addEventListener('click',()=>{sound=!sound;$('#sound').textContent=sound?'音 ON':'音 OFF';$('#sound').setAttribute('aria-pressed',String(sound));$('#sound').setAttribute('aria-label',sound?'効果音をオフにする':'効果音をオンにする');if(sound)tone('land');});
 result.addEventListener('keydown',e=>{if(e.key==='Tab'){const buttons=[...result.querySelectorAll('button:not([hidden])')];if(e.shiftKey&&document.activeElement===buttons[0]){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===buttons.at(-1)){e.preventDefault();buttons[0].focus();}}});
 function initLevel(){
   clearInspect();view?.dispose();view=null;lastFocus=null;busy=false;
   display=puzzle.board.snapshot();$('#screw-buttons').replaceChildren();$('#stage-error').hidden=true;
   const cube=puzzle.stage.kind==='cube';$('.game').dataset.kind=puzzle.stage.kind;
+  const tutorial=$('#tutorial');tutorial.classList.toggle('floating',!cube);
+  if(cube)stage.before(tutorial);else stage.prepend(tutorial);
   $('.level b').textContent=String(puzzle.index+1).padStart(2,'0');
   $('.stage-caption').textContent=`MATTE METAL / ${cube?'CUBE':'FLAT'} ${String(puzzle.index+1).padStart(2,'0')}`;
   stage.setAttribute('aria-label',cube?'ドラッグで360度回転できる金属のキューブ':'ドラッグで傾けられる金属の平面パズル');

@@ -9,7 +9,7 @@ export const FACES = [
   { id:'B', number:6, name:'背面', rotation:[0,Math.PI,0], normal:[0,0,-1], screws:[[.9,1.23],[-1.08,.4],[.6,-1.12]] },
 ];
 
-// 折り返した留め具が、隣の面にあるネジを覆う。内側の追加レイヤーはない。
+// 折り返した金属は外側のナットを覆う。内側の頭へのアクセスとは別に扱う。
 export const FLAPS = [
   { from:'T', to:'F', screw:0, edge:'top' },
   { from:'T', to:'B', screw:0, edge:'top' },
@@ -26,7 +26,11 @@ export function makeCubeLevel(colors: Color[], trays: Color[]): LevelDef {
       // ルール検証用の展開図。3Dの位置は面ごとの向きと局所座標から作る。
       const x=60+(i%3)*335,y=390+Math.floor(i/3)*510;
       return { id:f.id,x,y,w:260,h:420,z:i,color:i%2?'grey':'cream',
-        screws:f.screws.map(([u,v],j)=>({x:x+130+u*60,y:y+210-v*60,color:colors[i*3+j],blockedBy:FLAPS.filter(t=>t.to===f.id&&t.screw===j).map(t=>t.from)})) };
+        screws:f.screws.map(([u,v],j)=>{
+          const inside=FLAPS.some(t=>t.to===f.id&&t.screw===j);
+          return {x:x+130+u*60,y:y+210-v*60,color:colors[i*3+j],blockedBy:[],headSide:inside?'inside':'outside',
+            ...(inside?{accessThrough:FACES.filter(other=>other.id!==f.id).map(other=>other.id)}:{})};
+        }) };
     }),
   };
 }

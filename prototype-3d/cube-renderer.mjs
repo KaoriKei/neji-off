@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { MetalScene, roundedShape, circularHole, extrude } from './renderer.mjs';
 import { FACES, FLAPS } from './cube-model.ts';
 import { mountFastener } from './fastener-mount.mjs';
+import { nearestScrew } from './screw-hit.mjs';
 
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const Z=new THREE.Vector3(0,0,1),X=new THREE.Vector3(1,0,0),Y=new THREE.Vector3(0,1,0);
@@ -29,7 +30,7 @@ export class CubeScene extends MetalScene {
     this.raycaster=new THREE.Raycaster();this.blockerMeshes=[];this.visibleScrews=new Set();
     for(const face of FACES)this.makeFace(face);
     this.root.updateMatrixWorld(true);
-    for(const flap of FLAPS)if(this.level.plates.find(p=>p.id===flap.to).screws[flap.screw].blockedBy?.includes(flap.from))this.makeFlap(flap);
+    for(const flap of FLAPS)if(this.level.plates.find(p=>p.id===flap.to).screws[flap.screw].headSide==='inside')this.makeFlap(flap);
   }
   makeFace(face){
     const p=this.level.plates.find(p=>p.id===face.id),group=new THREE.Group();
@@ -46,7 +47,7 @@ export class CubeScene extends MetalScene {
     const label=new THREE.Mesh(new THREE.PlaneGeometry(.62,.23),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));label.position.set(.95,-1.54,.143);group.add(label);
     p.screws.forEach((s,i)=>{
       const id=`${p.id}-${i}`,[u,v]=face.screws[i],sg=new THREE.Group();
-      const mount=mountFastener(sg,{x:u,y:v,inside:!!s.blockedBy?.length,angle:i*.32});
+      const mount=mountFastener(sg,{x:u,y:v,inside:s.headSide==='inside',angle:i*.32});
       const washer=new THREE.Mesh(this.geo.washer,this.washerMaterials[s.color]);washer.castShadow=washer.receiveShadow=true;sg.add(washer);
       const head=new THREE.Mesh(this.geo.head,this.materials.head);head.position.z=.075;head.castShadow=head.receiveShadow=true;sg.add(head);
       const recess=new THREE.Mesh(this.geo.recess,this.materials.recess);recess.position.z=.078;sg.add(recess);
@@ -90,9 +91,11 @@ export class CubeScene extends MetalScene {
     let down=null;
     this.listen('pointerdown',e=>{
       if(this.locked||e.button!==0||down)return;
-      down={id:e.pointerId,x:e.clientX,y:e.clientY,quaternion:this.targetQuaternion.clone(),target:e.target.closest('[data-screw]')?.dataset.screw,moved:false};this.stage.setPointerCapture(e.pointerId);
+      this.hoverPointer={x:e.clientX,y:e.clientY};
+      down={id:e.pointerId,x:e.clientX,y:e.clientY,quaternion:this.targetQuaternion.clone(),target:this.pickScrew(e.clientX,e.clientY),moved:false};this.stage.setPointerCapture(e.pointerId);
     });
     this.listen('pointermove',e=>{
+      this.hoverPointer={x:e.clientX,y:e.clientY};
       if(!down||e.pointerId!==down.id)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
       if(Math.hypot(dx,dy)>6){down.moved=true;this.stage.classList.add('dragging');
         const qx=new THREE.Quaternion().setFromAxisAngle(X,dy*.009),qy=new THREE.Quaternion().setFromAxisAngle(Y,dx*.009);
@@ -105,6 +108,7 @@ export class CubeScene extends MetalScene {
       if(!d.moved&&d.target&&!this.inspectTarget&&this.visibleScrews.has(d.target))this.onPull?.(d.target);
     });
     const cancel=()=>{down=null;this.stage.classList.remove('dragging');};this.listen('pointercancel',cancel);this.listen('lostpointercapture',cancel);
+    this.listen('pointerleave',()=>{this.hoverPointer=null;});
   }
   turn(angle){this.targetQuaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(Y,angle)).normalize();}
   resetView(){this.targetQuaternion.copy(this.homeQuaternion);}
@@ -132,6 +136,11 @@ export class CubeScene extends MetalScene {
     });p.group.visible=false;p.fallen=true;p.falling=false;
   }
   worldPoint(s){return s.group.localToWorld(new THREE.Vector3(0,0,.19));}
+  projectHead(id){const v=this.worldPoint(this.screws.get(id)).project(this.camera);return{x:(v.x+1)*this.width/2,y:(1-v.y)*this.height/2};}
+  pickScrew(clientX,clientY){
+    const rect=this.stage.getBoundingClientRect();
+    return nearestScrew([...this.visibleScrews].map(id=>({id,...this.projectHead(id)})),clientX-rect.left,clientY-rect.top);
+  }
   headFacing(s){const direction=Z.clone().applyQuaternion(s.group.getWorldQuaternion(new THREE.Quaternion()));return direction.dot(this.camera.position.clone().sub(this.worldPoint(s)).normalize());}
   facing(p){return p.normal.clone().applyQuaternion(this.root.quaternion).dot(this.camera.position.clone().sub(p.group.getWorldPosition(new THREE.Vector3())).normalize());}
   unobstructed(s,blockers){
@@ -151,9 +160,11 @@ export class CubeScene extends MetalScene {
     this.visibleScrews.clear();
     for(const[id,s]of this.screws){
       if(!s.button)continue;const p=this.plates.get(s.plateId);
-      const visible=!s.pulled&&!s.covered&&this.inspect<.08&&p.group.visible&&this.headFacing(s)>.20&&this.unobstructed(s,blockers);
-      s.button.hidden=!visible;if(visible){this.visibleScrews.add(id);const pos=this.project(id);s.button.style.transform=`translate3d(${pos.x}px,${pos.y}px,0) translate(-50%,-50%)`;}
+      const visible=!s.pulled&&!s.covered&&this.inspect<.08&&p.group.visible&&this.headFacing(s)>.04&&this.unobstructed(s,blockers);
+      s.button.hidden=!visible;if(visible){this.visibleScrews.add(id);const pos=this.projectHead(id);s.button.style.transform=`translate3d(${pos.x}px,${pos.y}px,0) translate(-50%,-50%)`;}
     }
+    const hovered=this.hoverPointer&&!this.locked&&this.inspect<.08?this.pickScrew(this.hoverPointer.x,this.hoverPointer.y):null;
+    for(const[id,s]of this.screws)s.button?.classList.toggle('hovered',id===hovered);
     this.render();
   }
 }

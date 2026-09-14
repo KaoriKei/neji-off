@@ -35,10 +35,21 @@
 /* 操作の進行に合わせた短い案内。高さを保ち、飛行の行き先を動かさない。 */
 .tutorial{flex-shrink:0;height:70px;padding:8px 12px;margin:2px 0 4px;border-left:2px solid #00afcc;background:#e2ecee80;border-radius:0 7px 7px 0}
 .tutorial strong{display:block;line-height:16px;font-size:11px;font-weight:600;color:#47636d;letter-spacing:.3px}.tutorial p{font-size:10px;line-height:1.6;margin:3px 0 0;color:#74858d}
-.game:has(.tutorial:not([hidden])){min-height:800px}
+.game[data-kind=cube]:has(.tutorial:not([hidden])){min-height:800px}
 .screw-button.lesson-target:after{content:'';position:absolute;inset:-3px;border:2px solid #00afcc88;border-radius:50%;animation:lesson-pulse 1.8s ease-in-out infinite;pointer-events:none}
 @keyframes lesson-pulse{50%{transform:scale(1.15);opacity:.45}}
-@media(max-height:790px){.game:has(.tutorial:not([hidden])){min-height:785px}}
+@media(max-height:790px){.game[data-kind=cube]:has(.tutorial:not([hidden])){min-height:785px}}
 
 /* 案内のリングを金属の描画より手前に置く。 */
 .stage{z-index:6}
+
+/* 平面の説明は、盤面より手前に浮かぶ短いカードで順に案内する。 */
+.tutorial.floating{position:absolute;z-index:8;left:50%;top:8px;width:calc(100% - 34px);max-width:380px;height:auto;min-height:76px;margin:0;padding:13px 16px;border:1px solid #81c8d4;border-radius:15px;background:linear-gradient(150deg,#ffffff,#f2f7f8);box-shadow:0 10px 24px #213e4b29,0 2px 2px #ffffffb0,inset 0 1px 0 #fff;transform:translateX(-50%);text-align:center;pointer-events:none;animation:guide-float 2.6s ease-in-out infinite}
+.tutorial.floating strong{font-size:17px;line-height:1.5;color:#344e59;letter-spacing:.1px}.tutorial.floating p{font-size:12px;line-height:1.6;margin:4px 0 0;color:#6c808a}
+.game[data-kind=flat] .stage{min-height:340px}
+.screw-button.lesson-target:before{content:'↓';position:absolute;top:-32px;left:50%;transform:translateX(-50%);font-size:29px;line-height:1;font-weight:700;color:#00afcc;text-shadow:1px 1px 2px #fff,-1px -1px 2px #fff;pointer-events:none;animation:guide-pointer 1.1s ease-in-out infinite}
+@keyframes guide-float{50%{transform:translate(-50%,-3px)}}
+@keyframes guide-pointer{50%{transform:translate(-50%,-5px)}}
+@media(prefers-reduced-motion:reduce){.tutorial.floating,.screw-button.lesson-target:before{animation:none}}
+.game[data-kind=cube] .screw-button:hover{background:transparent;box-shadow:none}
+.game[data-kind=cube] .screw-button.hovered{background:#00afcc08;box-shadow:0 0 0 2px #00afcc66}
